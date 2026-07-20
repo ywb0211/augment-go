@@ -74,6 +74,9 @@
             padding: 6px 14px;
             border-radius: 20px;
             border: 1px solid var(--panel-border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
         .user-info-bar span {
@@ -682,6 +685,7 @@
         <h1>증강 바둑</h1>
         <div class="user-info-bar" id="user-bar" style="display: none;">
             <span id="user-profile-badge">-</span>
+            <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.75rem;" id="logout-btn">로그아웃</button>
         </div>
     </header>
 
@@ -824,14 +828,14 @@
         </div>
     </div>
 
-    <!-- 🌟 통합 커스텀 확인(Confirm / 5초 카운트다운) 모달 -->
+    <!-- 🌟 통합 커스텀 확인(Confirm) 모달 -->
     <div class="modal" id="custom-confirm-modal">
         <div class="modal-content" style="max-width: 460px;">
             <h3 id="custom-confirm-title" style="color: var(--danger-color);">경고</h3>
             <p id="custom-confirm-msg" style="font-size: 0.95rem; color: #fff; margin: 18px 0; line-height: 1.5; word-break: break-word;"></p>
             <div style="display: flex; gap: 10px;">
-                <button class="btn btn-secondary" style="flex: 1;" id="custom-confirm-cancel-btn">취소 (5s)</button>
-                <button class="btn btn-danger" style="flex: 1;" id="custom-confirm-action-btn">확인</button>
+                <button class="btn btn-secondary" style="flex: 1;" id="custom-confirm-cancel-btn">취소</button>
+                <button class="btn btn-danger" style="flex: 1;" id="custom-confirm-action-btn">퇴장 (5s)</button>
             </div>
         </div>
     </div>
@@ -891,6 +895,8 @@
     <script>
         const socket = io();
 
+        let confirmCountdownInterval = null;
+
         // 🌟 커스텀 통합 알림 모달 헬퍼 함수
         function showCustomAlert(msg, title = '알림') {
             const modal = document.getElementById('custom-alert-modal');
@@ -906,36 +912,42 @@
             });
         }
 
-        // 🌟 커스텀 통합 확인(Confirm + 5초 카운트다운) 모달 헬퍼 함수
-        let confirmCountdownInterval = null;
-        function showCustomConfirm({ title = '확인', msg, actionText = '확인', countdownSec = 5 }, onConfirm, onCancel) {
+        // 🌟 대국 중 퇴장 5초 카운트다운 전용 모달
+        function showLeaveConfirmModal(onConfirm) {
             const modal = document.getElementById('custom-confirm-modal');
             const cancelBtn = document.getElementById('custom-confirm-cancel-btn');
             const actionBtn = document.getElementById('custom-confirm-action-btn');
 
-            document.getElementById('custom-confirm-title').innerText = title;
-            document.getElementById('custom-confirm-msg').innerText = msg;
-            actionBtn.innerText = actionText;
+            document.getElementById('custom-confirm-title').innerText = '⚠️ 대국 중 퇴장 경고';
+            document.getElementById('custom-confirm-msg').innerText = '정말 퇴장하시겠습니까? 대국 중 퇴장하시면 즉시 기권패 처리됩니다.';
 
-            let remainingSec = countdownSec;
-            cancelBtn.innerText = `취소 (${remainingSec}s)`;
+            let sec = 5;
+            actionBtn.disabled = true;
+            actionBtn.style.opacity = '0.5';
+            actionBtn.style.cursor = 'not-allowed';
+            actionBtn.innerText = `퇴장 (${sec}s)`;
+
+            cancelBtn.innerText = '취소';
 
             if (confirmCountdownInterval) clearInterval(confirmCountdownInterval);
 
             modal.classList.add('active');
 
             confirmCountdownInterval = setInterval(() => {
-                remainingSec -= 1;
-                if (remainingSec <= 0) {
+                sec -= 1;
+                if (sec <= 0) {
                     clearInterval(confirmCountdownInterval);
-                    modal.classList.remove('active');
-                    if (typeof onCancel === 'function') onCancel();
+                    actionBtn.disabled = false;
+                    actionBtn.style.opacity = '1';
+                    actionBtn.style.cursor = 'pointer';
+                    actionBtn.innerText = '퇴장하기 (기권패)';
                 } else {
-                    cancelBtn.innerText = `취소 (${remainingSec}s)`;
+                    actionBtn.innerText = `퇴장 (${sec}s)`;
                 }
             }, 1000);
 
             actionBtn.onclick = () => {
+                if (actionBtn.disabled) return;
                 clearInterval(confirmCountdownInterval);
                 modal.classList.remove('active');
                 if (typeof onConfirm === 'function') onConfirm();
@@ -944,7 +956,36 @@
             cancelBtn.onclick = () => {
                 clearInterval(confirmCountdownInterval);
                 modal.classList.remove('active');
-                if (typeof onCancel === 'function') onCancel();
+            };
+        }
+
+        // 🌟 일반 확인 Confirm 모달
+        function showGeneralConfirm(title, msg, actionText, onConfirm) {
+            const modal = document.getElementById('custom-confirm-modal');
+            const cancelBtn = document.getElementById('custom-confirm-cancel-btn');
+            const actionBtn = document.getElementById('custom-confirm-action-btn');
+
+            document.getElementById('custom-confirm-title').innerText = title;
+            document.getElementById('custom-confirm-msg').innerText = msg;
+            
+            actionBtn.disabled = false;
+            actionBtn.style.opacity = '1';
+            actionBtn.style.cursor = 'pointer';
+            actionBtn.innerText = actionText;
+
+            cancelBtn.innerText = '취소';
+
+            if (confirmCountdownInterval) clearInterval(confirmCountdownInterval);
+
+            modal.classList.add('active');
+
+            actionBtn.onclick = () => {
+                modal.classList.remove('active');
+                if (typeof onConfirm === 'function') onConfirm();
+            };
+
+            cancelBtn.onclick = () => {
+                modal.classList.remove('active');
             };
         }
 
@@ -1025,20 +1066,19 @@
             });
         };
 
-        document.getElementById('login-submit-btn').onclick = () => {
-            const username = document.getElementById('login-username').value.trim();
-            const password = document.getElementById('login-password').value;
-
-            if (!username || !password) return showCustomAlert('아이디와 비밀번호를 입력해 주세요.');
-
-            socket.emit('login_account', { username, password }, (res) => {
+        // 🌟 로그인 처리 (세션 저장 및 중복 로그인 방지 확인)
+        function performLogin(username, password, forceLogin = false) {
+            socket.emit('login_account', { username, password, forceLogin }, (res) => {
                 if (res.success) {
                     currentUser = res.user;
                     isAdminUser = res.isAdmin;
                     if (res.shopItems) shopItems = res.shopItems;
 
+                    // localStorage에 세션 저장 (새로고침 로그인 유지)
+                    localStorage.setItem('baduk_user_session', JSON.stringify({ username, password }));
+
                     updateHeaderProfile(currentUser, isAdminUser);
-                    document.getElementById('user-bar').style.display = 'block';
+                    document.getElementById('user-bar').style.display = 'flex';
 
                     if (isAdminUser) {
                         document.getElementById('admin-panel').style.display = 'block';
@@ -1052,11 +1092,75 @@
                         switchView('lobby');
                         renderLobby(res.lobbyData);
                     }
+                } else if (res.isAlreadyLoggedIn) {
+                    // 🌟 중복 로그인 감지 시 원격 로그아웃 확인 모달 팝업
+                    showGeneralConfirm(
+                        '🔑 중복 로그인 감지',
+                        res.message || '이미 다른 브라우저/기기에서 로그인되어 있습니다. 기존 접속을 종료하고 여기에서 새로 로그인하시겠습니까?',
+                        '기존 세션 종료 후 접속',
+                        () => performLogin(username, password, true)
+                    );
                 } else {
                     showCustomAlert(res.message || '로그인에 실패했습니다.');
                 }
             });
+        }
+
+        document.getElementById('login-submit-btn').onclick = () => {
+            const username = document.getElementById('login-username').value.trim();
+            const password = document.getElementById('login-password').value;
+            if (!username || !password) return showCustomAlert('아이디와 비밀번호를 입력해 주세요.');
+            performLogin(username, password, false);
         };
+
+        // 🌟 새로고침 시 자동 세션 로그인 체크
+        function checkAutoLogin() {
+            const savedSession = localStorage.getItem('baduk_user_session');
+            if (savedSession) {
+                try {
+                    const { username, password } = JSON.parse(savedSession);
+                    if (username && password) {
+                        performLogin(username, password, false);
+                    }
+                } catch (e) {
+                    localStorage.removeItem('baduk_user_session');
+                }
+            }
+        }
+
+        // 🌟 로그아웃 처리
+        document.getElementById('logout-btn').onclick = () => {
+            showGeneralConfirm('로그아웃 확인', '정말 로그아웃 하시겠습니까?', '로그아웃', () => {
+                localStorage.removeItem('baduk_user_session');
+                socket.emit('logout_account');
+                currentUser = null;
+                isAdminUser = false;
+                myRole = null;
+                document.getElementById('user-bar').style.display = 'none';
+                document.getElementById('admin-panel').style.display = 'none';
+                switchView('login');
+                showCustomAlert('성공적으로 로그아웃되었습니다.');
+            });
+        };
+
+        // 🌟 다른 기기/창에서 새로 로그인 시 원격 로그아웃 처리
+        socket.on('forced_logout', (data) => {
+            localStorage.removeItem('baduk_user_session');
+            currentUser = null;
+            isAdminUser = false;
+            myRole = null;
+            document.getElementById('user-bar').style.display = 'none';
+            document.getElementById('admin-panel').style.display = 'none';
+            switchView('login');
+            showCustomAlert(data.message || '다른 창에서 새롭게 로그인되어 현재 접속이 종료되었습니다.', '🔒 원격 로그아웃');
+        });
+
+        // 소켓 재연결 시 세션 체크 실행
+        socket.on('connect', () => {
+            if (!currentUser) {
+                checkAutoLogin();
+            }
+        });
 
         function updateHeaderProfile(user, isAdmin) {
             if (!user) return;
@@ -1192,7 +1296,7 @@
             });
         }
 
-        // --- 4. 게임 룸 및 컨트롤 (로비 나가기 5초 카운트다운 커스텀 모달 반영) ---
+        // --- 4. 게임 룸 및 컨트롤 ---
         const leaveRoomBtn = document.getElementById('leave-room-btn');
         const passBtn = document.getElementById('pass-btn');
         const resignBtn = document.getElementById('resign-btn');
@@ -1203,12 +1307,7 @@
                                   (currentRoomState.status === 'playing' || currentRoomState.status === 'selecting_augment');
 
             if (isPlayerInGame) {
-                showCustomConfirm({
-                    title: '⚠️ 대국 중 나가기 경고',
-                    msg: '대국 진행 도중 로비로 나가시면 자동 기권패 처리됩니다. 정말 나가시겠습니까?',
-                    actionText: '퇴장하기 (자동 기권)',
-                    countdownSec: 5
-                }, () => {
+                showLeaveConfirmModal(() => {
                     socket.emit('leave_room', () => {
                         switchView('lobby');
                     });
@@ -1222,24 +1321,14 @@
 
         passBtn.onclick = () => {
             if (myRole !== turn || myRole === 'spectator') return showCustomAlert('현재 본인 차례가 아닙니다.');
-            showCustomConfirm({
-                title: '턴 패스 확인',
-                msg: '턴을 패스하시겠습니까? (양측 연속 패스 시 계가로 대국 종료)',
-                actionText: '패스하기',
-                countdownSec: 5
-            }, () => {
+            showGeneralConfirm('턴 패스 확인', '턴을 패스하시겠습니까? (양측 연속 패스 시 계가로 대국 종료)', '패스하기', () => {
                 socket.emit('pass_turn');
             });
         };
 
         resignBtn.onclick = () => {
             if (myRole === 'spectator') return showCustomAlert('관전자는 기권할 수 없습니다.');
-            showCustomConfirm({
-                title: '대국 기권 확인',
-                msg: '정말로 기권하시겠습니까? 상대방의 불계승으로 대국이 종료됩니다.',
-                actionText: '기권하기',
-                countdownSec: 5
-            }, () => {
+            showGeneralConfirm('대국 기권 확인', '정말로 기권하시겠습니까? 상대방의 불계승으로 대국이 종료됩니다.', '기권하기', () => {
                 socket.emit('resign');
             });
         };

@@ -533,9 +533,9 @@ io.on('connection', (socket) => {
         if (typeof callback === 'function') callback(result);
     });
 
-    // 2. 로그인
+    // 2. 로그인 (중복 로그인 검사 & 원격 강제 로그아웃 연동)
     socket.on('login_account', (data, callback) => {
-        const { username, password } = data || {};
+        const { username, password, forceLogin } = data || {};
         if (!username || !password) {
             if (typeof callback === 'function') callback({ success: false, message: '아이디와 비밀번호를 입력해 주세요.' });
             return;
@@ -548,6 +548,36 @@ io.on('connection', (socket) => {
         }
 
         const userObj = result.user;
+
+        // 동일 계정 중복 접속 소켓 탐색
+        let existingSocketId = null;
+        for (let sId in users) {
+            if (users[sId].username === userObj.username && sId !== socket.id) {
+                existingSocketId = sId;
+                break;
+            }
+        }
+
+        if (existingSocketId && !forceLogin) {
+            if (typeof callback === 'function') {
+                callback({
+                    success: false,
+                    isAlreadyLoggedIn: true,
+                    message: '이미 다른 브라우저/기기에서 로그인되어 있는 계정입니다. 기존 세션을 종료하고 여기에서 접속하시겠습니까?'
+                });
+            }
+            return;
+        }
+
+        // 강제 로그인 처리: 기존 기기 소켓에 forced_logout 통보 후 정리
+        if (existingSocketId && forceLogin) {
+            io.to(existingSocketId).emit('forced_logout', {
+                message: '다른 창 또는 기기에서 동일한 계정으로 로그인되어 현재 접속이 종료되었습니다.'
+            });
+            leaveUserFromRoom(existingSocketId);
+            delete users[existingSocketId];
+        }
+
         users[socket.id] = {
             id: socket.id,
             username: userObj.username,
@@ -619,6 +649,17 @@ io.on('connection', (socket) => {
             });
         }
         broadcastLobbyData();
+    });
+
+    // 2-1. 로그아웃 핸들러
+    socket.on('logout_account', (callback) => {
+        const user = users[socket.id];
+        if (user) {
+            leaveUserFromRoom(socket.id);
+            delete users[socket.id];
+        }
+        broadcastLobbyData();
+        if (typeof callback === 'function') callback({ success: true });
     });
 
     // 3. 방 생성
@@ -709,7 +750,7 @@ io.on('connection', (socket) => {
             startInitialAugmentPhase(room);
         } else {
             io.to(roomId).emit('room_state_update', getRoomSanitizedState(room));
-            io.to(roomId).emit('log_update', `${user.nickname} 님이 ${role === 'black' ? '흑' : '백' : '관전자'}(으)로 입장하셨습니다.`);
+            io.to(roomId).emit('log_update', `${user.nickname} 님이 ${role === 'black' ? '흑' : role === 'white' ? '백' : '관전자'}(으)로 입장하셨습니다.`);
         }
 
         if (typeof callback === 'function') {
@@ -942,7 +983,7 @@ io.on('connection', (socket) => {
         }
     });
 
-    // 8. 방 퇴장 (대국 중 퇴장 시 자동 기권패 처리)
+    // 8. 방 퇴장 (대국 진행 중인 유저 퇴장 시 자동 판정승 처리)
     socket.on('leave_room', (callback) => {
         const user = users[socket.id];
         if (user && user.roomId) {
@@ -952,7 +993,7 @@ io.on('connection', (socket) => {
                 if (room.players.black && room.players.black.socketId === socket.id) color = 'black';
                 if (room.players.white && room.players.white.socketId === socket.id) color = 'white';
 
-                // 플레이어가 진행 중인 대국 도중 나가는 경우 -> 자동 기권패 처리
+                // 플레이어가 대국 진행 중 나가는 경우 -> 자동 판정승 처리
                 if (color && (room.status === 'playing' || room.status === 'selecting_augment')) {
                     const enemyColor = color === 'black' ? 'white' : 'black';
                     const winnerNickname = room.players[enemyColor] ? room.players[enemyColor].nickname : '상대방';
@@ -964,7 +1005,7 @@ io.on('connection', (socket) => {
                     recordGameResult(room, enemyColor);
 
                     const colorKor = color === 'black' ? '흑' : '백';
-                    const logMsg = `[자동 기권] ${user.nickname}(${colorKor}) 님이 로비로 퇴장하여 기권 처리되었습니다. ${winnerNickname} 승리!`;
+                    const logMsg = `[판정승] ${user.nickname}(${colorKor}) 님이 대국 중 퇴장하셨습니다. ${winnerNickname} 님 판정승 (불계승)!`;
 
                     io.to(room.id).emit('game_over', {
                         winner: enemyColor,
@@ -1365,7 +1406,7 @@ io.on('connection', (socket) => {
 
                             recordGameResult(room, enemyRole);
 
-                            const logMsg = `[몰수패] ${user.nickname}(${roleKor}) 님이 30초 이내에 재접속하지 않아 기권패 처리되었습니다. ${winnerName} 승리!`;
+                            const logMsg = `[판정승] ${user.nickname}(${roleKor}) 님이 30초 이내에 재접속하지 않아 기권패 처리되었습니다. ${winnerName} 님 판정승!`;
 
                             io.to(room.id).emit('game_over', {
                                 winner: enemyRole,
