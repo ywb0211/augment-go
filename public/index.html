@@ -19,8 +19,12 @@
             --warning-color: #d29922;
             --success-color: #3fb950;
             --defense-color: #58a6ff;
-            --black-stone-color: #161618;
-            --white-stone-color: #f0f6fc;
+            --gold-color: #f1e05a;
+
+            --common-color: #8b949e;
+            --rare-color: #58a6ff;
+            --epic-color: #bc8cff;
+            --legendary-color: #d8a657;
         }
 
         * {
@@ -29,11 +33,14 @@
             padding: 0;
         }
 
-        body {
-            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        html, body {
+            width: 100vw;
+            max-width: 100vw;
+            overflow-x: hidden;
             background-color: var(--bg-color);
             color: var(--text-color);
             min-height: 100vh;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -41,7 +48,7 @@
 
         header {
             width: 100%;
-            padding: 16px 32px;
+            padding: 14px 24px;
             background: #161b22;
             border-bottom: 1px solid var(--panel-border);
             display: flex;
@@ -51,17 +58,17 @@
         }
 
         header h1 {
-            font-size: 1.35rem;
+            font-size: 1.3rem;
             font-weight: 700;
             color: var(--accent-color);
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
             display: flex;
             align-items: center;
             gap: 10px;
         }
 
         .user-info-bar {
-            font-size: 0.95rem;
+            font-size: 0.88rem;
             color: var(--text-muted);
             background: rgba(255, 255, 255, 0.04);
             padding: 6px 14px;
@@ -76,8 +83,8 @@
 
         .view-container {
             width: 100%;
-            max-width: 1160px;
-            padding: 24px 20px;
+            max-width: 1200px;
+            padding: 16px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -94,66 +101,82 @@
             align-items: center;
         }
 
-        /* 1. 로그인 뷰 */
         #login-view {
-            margin-top: 80px;
+            margin-top: 40px;
         }
 
         .login-card {
             background: var(--panel-bg);
             border: 1px solid var(--panel-border);
             border-radius: 14px;
-            padding: 44px 36px;
+            padding: 32px 28px;
             width: 100%;
             max-width: 420px;
             text-align: center;
             box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
         }
 
-        .login-card h2 {
-            font-size: 1.6rem;
-            margin-bottom: 8px;
-            color: #fff;
-        }
-
-        .login-card p {
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            margin-bottom: 28px;
-            line-height: 1.4;
-        }
-
-        .input-group {
+        .tab-buttons {
             display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--panel-border);
+            padding-bottom: 10px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            color: var(--accent-color);
+            border-bottom-color: var(--accent-color);
+        }
+
+        .auth-form {
+            display: none;
             flex-direction: column;
             gap: 14px;
         }
 
-        input[type="text"] {
+        .auth-form.active {
+            display: flex;
+        }
+
+        input[type="text"], input[type="password"] {
             width: 100%;
             padding: 12px 16px;
             background: #0d1117;
             border: 1px solid var(--panel-border);
             border-radius: 8px;
             color: #fff;
-            font-size: 0.95rem;
+            font-size: 0.92rem;
             outline: none;
             transition: border-color 0.2s, box-shadow 0.2s;
         }
 
-        input[type="text"]:focus {
+        input[type="text"]:focus, input[type="password"]:focus {
             border-color: var(--accent-color);
             box-shadow: 0 0 8px var(--accent-glow);
         }
 
         .btn {
-            padding: 12px 20px;
+            padding: 11px 18px;
             background: var(--accent-color);
             color: #0d1117;
             border: none;
             border-radius: 8px;
             font-weight: 700;
-            font-size: 0.95rem;
+            font-size: 0.92rem;
             cursor: pointer;
             transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
         }
@@ -199,20 +222,36 @@
             box-shadow: 0 4px 12px rgba(248, 81, 73, 0.3);
         }
 
+        .btn-gold {
+            background: var(--gold-color);
+            color: #0d1117;
+        }
+
+        .btn-gold:hover {
+            background: #f7e878;
+            box-shadow: 0 4px 12px rgba(241, 224, 90, 0.3);
+        }
+
         /* 2. 로비 뷰 */
         .lobby-layout {
             display: grid;
-            grid-template-columns: 290px 1fr;
-            gap: 24px;
+            grid-template-columns: 320px 1fr;
+            gap: 20px;
             width: 100%;
             margin-top: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .lobby-layout {
+                grid-template-columns: 1fr;
+            }
         }
 
         .panel {
             background: var(--panel-bg);
             border: 1px solid var(--panel-border);
             border-radius: 12px;
-            padding: 20px;
+            padding: 18px;
             box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
         }
 
@@ -220,8 +259,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 16px;
-            padding-bottom: 12px;
+            margin-bottom: 14px;
+            padding-bottom: 10px;
             border-bottom: 1px solid var(--panel-border);
         }
 
@@ -244,31 +283,26 @@
             padding: 10px 14px;
             background: #21262d;
             border-radius: 8px;
-            font-size: 0.9rem;
+            font-size: 0.86rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
             border: 1px solid transparent;
-            transition: border-color 0.2s;
         }
 
-        .user-item:hover {
-            border-color: var(--panel-border);
-        }
-
-        .user-status-badge {
+        .user-stats-pill {
             font-size: 0.75rem;
+            color: var(--accent-color);
+            background: rgba(216, 166, 87, 0.1);
             padding: 2px 8px;
-            border-radius: 12px;
-            background: rgba(63, 185, 80, 0.15);
-            color: var(--success-color);
-            border: 1px solid rgba(63, 185, 80, 0.3);
+            border-radius: 10px;
+            border: 1px solid rgba(216, 166, 87, 0.25);
         }
 
         .room-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-            gap: 16px;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 14px;
             max-height: 500px;
             overflow-y: auto;
         }
@@ -277,33 +311,31 @@
             background: #21262d;
             border: 1px solid var(--panel-border);
             border-radius: 10px;
-            padding: 18px;
+            padding: 16px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            gap: 14px;
-            transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+            gap: 12px;
+            transition: border-color 0.2s, transform 0.2s;
         }
 
         .room-card:hover {
             border-color: var(--accent-color);
             transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
         }
 
         .room-title {
             font-weight: 600;
-            font-size: 1rem;
+            font-size: 0.95rem;
             color: #fff;
-            line-height: 1.3;
         }
 
         .room-meta {
-            font-size: 0.85rem;
+            font-size: 0.82rem;
             color: var(--text-muted);
             display: flex;
             justify-content: space-between;
-            margin-top: 6px;
+            margin-top: 4px;
         }
 
         .room-actions {
@@ -313,26 +345,43 @@
 
         .room-actions .btn {
             flex: 1;
-            padding: 9px;
-            font-size: 0.85rem;
+            padding: 8px;
+            font-size: 0.82rem;
         }
 
         /* 3. 게임 뷰 */
         .game-layout {
             display: flex;
+            flex-direction: row;
             justify-content: center;
-            gap: 24px;
+            align-items: flex-start;
+            gap: 20px;
             width: 100%;
-            flex-wrap: wrap;
+            max-width: 100vw;
+            box-sizing: border-box;
+        }
+
+        @media (max-width: 992px) {
+            .game-layout {
+                flex-direction: column;
+                align-items: center;
+            }
         }
 
         .canvas-container {
             display: flex;
             flex-direction: column;
             align-items: center;
+            flex: 1;
+            max-width: 600px;
+            width: 100%;
         }
 
         canvas {
+            width: 100%;
+            max-width: 600px;
+            height: auto;
+            aspect-ratio: 1/1;
             border: 2px solid #4a3525;
             background-color: #d4a366;
             border-radius: 8px;
@@ -342,32 +391,36 @@
 
         .side-panel {
             width: 340px;
+            max-width: 100%;
             display: flex;
             flex-direction: column;
-            gap: 14px;
+            gap: 12px;
         }
 
         .status-card {
             background: var(--panel-bg);
             border: 1px solid var(--panel-border);
             border-radius: 10px;
-            padding: 14px 16px;
+            padding: 12px 14px;
             text-align: left;
         }
 
         .status-card h4 {
             font-size: 0.85rem;
             color: var(--text-muted);
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .player-info-box {
             display: flex;
             flex-direction: column;
             gap: 10px;
-            font-size: 0.9rem;
+            font-size: 0.88rem;
         }
 
         .player-row {
@@ -397,13 +450,35 @@
             color: #fff;
         }
 
-        .player-level-badge {
-            font-size: 0.75rem;
-            background: rgba(216, 166, 87, 0.15);
-            color: var(--accent-color);
-            padding: 2px 8px;
-            border-radius: 10px;
-            border: 1px solid rgba(216, 166, 87, 0.3);
+        .timer-badge {
+            font-size: 0.82rem;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 12px;
+            background: #0d1117;
+            color: var(--gold-color);
+            border: 1px solid var(--accent-color);
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .timer-badge.byoyomi {
+            background: rgba(248, 81, 73, 0.25);
+            color: #ff6b6b;
+            border-color: var(--danger-color);
+            animation: pulse-red 0.8s infinite alternate;
+        }
+
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 4px rgba(248, 81, 73, 0.4); transform: scale(1); }
+            100% { box-shadow: 0 0 14px rgba(248, 81, 73, 0.9); transform: scale(1.05); }
+        }
+
+        .gold-badge {
+            font-size: 0.8rem;
+            color: var(--gold-color);
+            font-weight: 700;
         }
 
         .xp-bar-container {
@@ -428,10 +503,45 @@
             line-height: 1.4;
         }
 
+        .inventory-box {
+            display: flex;
+            gap: 8px;
+            margin-top: 6px;
+        }
+
+        .inventory-slot {
+            flex: 1;
+            height: 38px;
+            background: #0d1117;
+            border: 1px dashed var(--panel-border);
+            border-radius: 6px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            padding: 2px;
+        }
+
+        .inventory-slot.has-item {
+            background: #21262d;
+            border: 1px solid var(--accent-color);
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .inventory-slot.has-item:hover {
+            background: #30363d;
+            border-color: var(--accent-hover);
+        }
+
         .log-box {
             background: #0d1117;
             border: 1px solid var(--panel-border);
-            height: 160px;
+            height: 150px;
             overflow-y: auto;
             padding: 10px;
             font-size: 0.82rem;
@@ -454,12 +564,24 @@
 
         .game-controls .btn {
             flex: 1;
-            padding: 10px;
+            padding: 9px;
             font-size: 0.85rem;
         }
 
-        /* 카테고리 뱃지 */
         .category-tag {
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-right: 4px;
+            display: inline-block;
+        }
+
+        .tag-growth { background: rgba(216, 166, 87, 0.2); color: var(--accent-color); border: 1px solid rgba(216, 166, 87, 0.4); }
+        .tag-attack { background: rgba(248, 81, 73, 0.2); color: var(--danger-color); border: 1px solid rgba(248, 81, 73, 0.4); }
+        .tag-defense { background: rgba(88, 166, 255, 0.2); color: var(--defense-color); border: 1px solid rgba(88, 166, 255, 0.4); }
+
+        .rarity-tag {
             font-size: 0.7rem;
             font-weight: 700;
             padding: 2px 6px;
@@ -468,11 +590,16 @@
             display: inline-block;
         }
 
-        .tag-growth { background: rgba(216, 166, 87, 0.2); color: var(--accent-color); border: 1px solid rgba(216, 166, 87, 0.4); }
-        .tag-attack { background: rgba(248, 81, 73, 0.2); color: var(--danger-color); border: 1px solid rgba(248, 81, 73, 0.4); }
-        .tag-defense { background: rgba(88, 166, 255, 0.2); color: var(--defense-color); border: 1px solid rgba(88, 166, 255, 0.4); }
+        .rarity-common { background: rgba(139, 148, 158, 0.2); color: var(--common-color); border: 1px solid var(--common-color); }
+        .rarity-rare { background: rgba(88, 166, 255, 0.2); color: var(--rare-color); border: 1px solid var(--rare-color); }
+        .rarity-epic { background: rgba(188, 140, 255, 0.2); color: var(--epic-color); border: 1px solid var(--epic-color); }
+        .rarity-legendary { background: rgba(216, 166, 87, 0.3); color: var(--legendary-color); border: 1px solid var(--legendary-color); }
 
-        /* 모달 팝업 */
+        .augment-card.card-common { border-color: var(--common-color); }
+        .augment-card.card-rare { border-color: var(--rare-color); box-shadow: 0 0 10px rgba(88, 166, 255, 0.25); }
+        .augment-card.card-epic { border-color: var(--epic-color); box-shadow: 0 0 14px rgba(188, 140, 255, 0.35); }
+        .augment-card.card-legendary { border-color: var(--legendary-color); box-shadow: 0 0 20px rgba(216, 166, 87, 0.6); background: linear-gradient(135deg, #21262d 0%, #2a251b 100%); }
+
         .modal {
             display: none;
             position: fixed;
@@ -493,11 +620,11 @@
 
         .modal-content {
             background: var(--panel-bg);
-            padding: 32px;
+            padding: 28px;
             border-radius: 14px;
             border: 1px solid var(--accent-color);
             width: 90%;
-            max-width: 560px;
+            max-width: 600px;
             text-align: center;
             box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
         }
@@ -505,19 +632,21 @@
         .modal-content h3 {
             font-size: 1.35rem;
             color: var(--accent-color);
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         .card-container {
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            margin-top: 20px;
+            gap: 10px;
+            margin-top: 16px;
+            max-height: 440px;
+            overflow-y: auto;
         }
 
         .augment-card {
             background: #21262d;
-            padding: 16px 14px;
+            padding: 14px;
             border-radius: 10px;
             cursor: pointer;
             text-align: left;
@@ -527,22 +656,22 @@
 
         .augment-card:hover {
             background: #30363d;
-            border-color: var(--accent-color);
             transform: translateX(4px);
         }
 
         .augment-card h4 {
-            margin-bottom: 6px;
+            margin-bottom: 4px;
             color: #fff;
-            font-size: 1rem;
+            font-size: 0.95rem;
             display: flex;
             align-items: center;
+            justify-content: space-between;
         }
 
         .augment-card p {
-            font-size: 0.85rem;
+            font-size: 0.82rem;
             color: var(--text-muted);
-            line-height: 1.4;
+            line-height: 1.3;
         }
     </style>
 </head>
@@ -550,48 +679,71 @@
 <body>
 
     <header>
-        <h1>증강 바둑 (Augmented Baduk)</h1>
+        <h1>증강 바둑</h1>
         <div class="user-info-bar" id="user-bar" style="display: none;">
-            접속 닉네임: <span id="my-nickname-display">-</span>
+            <span id="user-profile-badge">-</span>
         </div>
     </header>
 
     <div class="view-container">
 
-        <!-- 1. 로그인 화면 -->
+        <!-- 1. 로그인 / 회원가입 화면 -->
         <section class="view-section active" id="login-view">
             <div class="login-card">
-                <h2>게임 접속</h2>
-                <p>바둑 행마와 18종 증강 능력이 결합된 전장에 참가하세요.</p>
-                <div class="input-group">
-                    <input type="text" id="nickname-input" placeholder="닉네임 입력 (최대 12자)" maxlength="12">
-                    <button class="btn" id="login-btn">로비 입장</button>
+                <div class="tab-buttons">
+                    <button class="tab-btn active" id="tab-login-btn">로그인</button>
+                    <button class="tab-btn" id="tab-register-btn">회원가입</button>
                 </div>
+
+                <!-- 로그인 폼 -->
+                <form class="auth-form active" id="login-form" onsubmit="return false;">
+                    <input type="text" id="login-username" placeholder="아이디 입력" required>
+                    <input type="password" id="login-password" placeholder="비밀번호 입력" required>
+                    <button class="btn" id="login-submit-btn">대국실 입장</button>
+                </form>
+
+                <!-- 회원가입 폼 -->
+                <form class="auth-form" id="register-form" onsubmit="return false;">
+                    <input type="text" id="reg-username" placeholder="아이디 (최대 16자)" maxlength="16" required>
+                    <input type="password" id="reg-password" placeholder="비밀번호" required>
+                    <input type="password" id="reg-password-confirm" placeholder="비밀번호 확인" required>
+                    <input type="text" id="reg-nickname" placeholder="닉네임 (최대 12자)" maxlength="12" required>
+                    <button class="btn btn-gold" id="register-submit-btn">회원가입 완료</button>
+                </form>
             </div>
         </section>
 
         <!-- 2. 로비 화면 -->
         <section class="view-section" id="lobby-view">
+            <!-- 어드민 서버 용량 & 메모리 모니터링 패널 -->
+            <div class="panel" id="admin-panel" style="display: none; width: 100%; margin-bottom: 16px; background: linear-gradient(135deg, #1f1911 0%, #161b22 100%); border: 1px solid var(--accent-color);">
+                <div class="panel-header" style="margin-bottom: 8px; padding-bottom: 6px;">
+                    <h3 style="color: var(--accent-color); font-size: 0.95rem;">⚡ 어드민 서버 용량 & 메모리 모니터링 (Render 512MB 무료 티어)</h3>
+                </div>
+                <div style="display: flex; gap: 16px; flex-wrap: wrap; font-size: 0.84rem; color: #fff;">
+                    <div>RAM 사용량: <strong id="admin-ram-usage" style="color: var(--gold-color);">0 MB / 512 MB (0%)</strong></div>
+                    <div>힙 사용량: <strong id="admin-heap-usage">0 MB / 0 MB</strong></div>
+                    <div>실시간 접속자: <strong id="admin-users-count" style="color: var(--success-color);">0명</strong></div>
+                    <div>개설 대국방: <strong id="admin-rooms-count">0개</strong></div>
+                    <div>총 등록 회원: <strong id="admin-db-count">0명</strong></div>
+                    <div>서버 가동시간: <strong id="admin-uptime">0분</strong></div>
+                </div>
+            </div>
+
             <div class="lobby-layout">
-                <!-- 동시 접속자 목록 -->
                 <div class="panel">
                     <div class="panel-header">
                         <h3>접속자 목록</h3>
                     </div>
-                    <ul class="user-list" id="online-users-list">
-                        <!-- 동적 렌더링 -->
-                    </ul>
+                    <ul class="user-list" id="online-users-list"></ul>
                 </div>
 
-                <!-- 대국 방 목록 -->
                 <div class="panel">
                     <div class="panel-header">
                         <h3>대국 방 목록</h3>
                         <button class="btn" id="open-create-modal-btn">방 만들기</button>
                     </div>
-                    <div class="room-grid" id="room-list">
-                        <!-- 동적 렌더링 -->
-                    </div>
+                    <div class="room-grid" id="room-list"></div>
                 </div>
             </div>
         </section>
@@ -605,53 +757,55 @@
 
                 <div class="side-panel">
                     <div class="status-card">
-                        <h4>현재 게임 정보</h4>
-                        <div style="margin-bottom: 6px; font-weight: 700; font-size: 1.15rem; color: var(--accent-color);" id="room-title-display">
+                        <h4>
+                            <span>현재 대국 정보</span>
+                            <button class="btn btn-gold" style="padding: 4px 10px; font-size: 0.75rem;" id="open-shop-btn">상점 열기 🛒</button>
+                        </h4>
+                        <div style="margin-bottom: 4px; font-weight: 700; font-size: 1.1rem; color: var(--accent-color);" id="room-title-display">
                             대국실
                         </div>
-                        <div style="font-size: 0.9rem; margin-bottom: 4px;">
+                        <div style="font-size: 0.88rem; margin-bottom: 2px;">
                             내 역할: <span id="my-role-display" style="font-weight: bold; color:#fff;">-</span>
                         </div>
-                        <div style="font-size: 0.9rem;">
+                        <div style="font-size: 0.88rem;">
                             현재 차례: <span id="current-turn-display" style="font-weight: bold; color: var(--accent-color);">흑</span>
-                        </div>
-                        <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">
-                            종료 규칙: 연속 2회 패스(계가) 또는 상대 기권(불계승)
                         </div>
                     </div>
 
                     <div class="status-card">
                         <h4>플레이어 현황</h4>
                         <div class="player-info-box" id="players-status">
-                            <div class="player-row black-row" id="black-info">
+                            <div class="player-row black-row">
                                 <div class="player-header-line">
-                                    <span class="player-name">흑: 대기 중</span>
-                                    <span class="player-level-badge">Lv.1</span>
+                                    <span class="player-name" id="black-name-display">흑: 대기 중</span>
+                                    <span class="timer-badge" id="black-timer">⏱️ 05:00</span>
                                 </div>
-                                <div class="xp-bar-container"><div class="xp-bar-fill" style="width: 0%;"></div></div>
-                                <div class="player-detail">XP: 0/10 | 잡은 사석: 0개</div>
-                                <div class="player-detail" style="margin-top: 2px;">증강: 없음</div>
+                                <div class="xp-bar-container"><div class="xp-bar-fill" id="black-xp-fill" style="width: 0%;"></div></div>
+                                <div class="player-detail" id="black-stats-detail">XP: 0/25 | 골드: 50 💰 | 사석: 0개</div>
+                                <div class="inventory-box" id="black-inventory"></div>
+                                <div class="player-detail" style="margin-top: 4px;" id="black-augments-detail">증강 소지: 0개 / 6개</div>
                             </div>
-                            <div class="player-row white-row" id="white-info">
+                            <div class="player-row white-row">
                                 <div class="player-header-line">
-                                    <span class="player-name">백: 대기 중</span>
-                                    <span class="player-level-badge">Lv.1</span>
+                                    <span class="player-name" id="white-name-display">백: 대기 중</span>
+                                    <span class="timer-badge" id="white-timer">⏱️ 05:00</span>
                                 </div>
-                                <div class="xp-bar-container"><div class="xp-bar-fill" style="width: 0%;"></div></div>
-                                <div class="player-detail">XP: 0/10 | 잡은 사석: 0개</div>
-                                <div class="player-detail" style="margin-top: 2px;">증강: 없음</div>
+                                <div class="xp-bar-container"><div class="xp-bar-fill" id="white-xp-fill" style="width: 0%;"></div></div>
+                                <div class="player-detail" id="white-stats-detail">XP: 0/25 | 골드: 50 💰 | 사석: 0개</div>
+                                <div class="inventory-box" id="white-inventory"></div>
+                                <div class="player-detail" style="margin-top: 4px;" id="white-augments-detail">증강 소지: 0개 / 6개</div>
                             </div>
                         </div>
                     </div>
 
                     <div class="status-card">
-                        <h4>전장 브리핑</h4>
+                        <h4>전투 로그</h4>
                         <div class="log-box" id="log-box">대국실에 입장했습니다.</div>
                     </div>
 
                     <div class="game-controls">
-                        <button class="btn btn-warning" id="pass-btn">패스 (Pass)</button>
-                        <button class="btn btn-danger" id="resign-btn">기권 (Resign)</button>
+                        <button class="btn btn-warning" id="pass-btn">패스</button>
+                        <button class="btn btn-danger" id="resign-btn">기권</button>
                     </div>
 
                     <button class="btn btn-secondary" id="leave-room-btn">로비로 나가기</button>
@@ -679,7 +833,7 @@
     <div class="modal" id="initial-augment-modal">
         <div class="modal-content">
             <h3>시작 증강 능력 선택</h3>
-            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">대국에 적용할 시작 능력을 1개 선택하세요.</p>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">대국에 적용할 시작 능력을 선택하세요.</p>
             <div class="card-container" id="initial-card-container"></div>
         </div>
     </div>
@@ -688,8 +842,18 @@
     <div class="modal" id="augment-modal">
         <div class="modal-content">
             <h3>레벨 업! 증강 선택</h3>
-            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">전황을 뒤집을 특성을 1개 선택하세요.</p>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">전황을 뒤집을 특성을 선택하세요. (최대 레벨 6)</p>
             <div class="card-container" id="card-container"></div>
+        </div>
+    </div>
+
+    <!-- 상점 모달 -->
+    <div class="modal" id="shop-modal">
+        <div class="modal-content">
+            <h3>대국 상점 🛒</h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">골드로 소모품 및 유틸리티 아이템을 구매하세요. (최대 3슬롯 소지)</p>
+            <div class="card-container" id="shop-items-container"></div>
+            <button class="btn btn-secondary" style="width: 100%; margin-top: 14px;" id="close-shop-modal-btn">닫기</button>
         </div>
     </div>
 
@@ -706,7 +870,6 @@
     <script>
         const socket = io();
 
-        // UI View 관리
         const views = {
             login: document.getElementById('login-view'),
             lobby: document.getElementById('lobby-view'),
@@ -720,9 +883,9 @@
             views[viewName].classList.add('active');
         }
 
-        // 전역 상태
-        let myNickname = '';
-        let myRole = null; // 'black', 'white', 'spectator'
+        let currentUser = null;
+        let isAdminUser = false;
+        let myRole = null;
         let currentRoomState = null;
         let boardState = Array.from(Array(19), () => Array(19).fill(null));
         let shields = {};
@@ -730,37 +893,115 @@
         let turn = 'black';
         let lastMove = null;
         let hoverPos = null;
+        let shopItems = [];
+        let activeItemTargetMode = null;
+        let swapFirstStone = null;
 
-        // 캔버스 관련
+        const LEVEL_REQ = [25, 50, 85, 130, 190];
+
         const canvas = document.getElementById('board');
         const ctx = canvas.getContext('2d');
         const size = 19;
         const padding = 30;
         const cellSize = (canvas.width - padding * 2) / (size - 1);
 
-        // --- 1. 로그인 이벤트 ---
-        const nicknameInput = document.getElementById('nickname-input');
-        const loginBtn = document.getElementById('login-btn');
+        // --- 1. 로그인 / 회원가입 탭 및 인증 ---
+        const tabLoginBtn = document.getElementById('tab-login-btn');
+        const tabRegisterBtn = document.getElementById('tab-register-btn');
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
 
-        function handleLogin() {
-            const nickname = nicknameInput.value.trim();
-            if (!nickname) return alert('닉네임을 입력해 주세요.');
+        tabLoginBtn.onclick = () => {
+            tabLoginBtn.classList.add('active');
+            tabRegisterBtn.classList.remove('active');
+            loginForm.classList.add('active');
+            registerForm.classList.remove('active');
+        };
 
-            socket.emit('login', { nickname }, (res) => {
+        tabRegisterBtn.onclick = () => {
+            tabRegisterBtn.classList.add('active');
+            tabLoginBtn.classList.remove('active');
+            registerForm.classList.add('active');
+            loginForm.classList.remove('active');
+        };
+
+        document.getElementById('register-submit-btn').onclick = () => {
+            const username = document.getElementById('reg-username').value.trim();
+            const password = document.getElementById('reg-password').value;
+            const passwordConfirm = document.getElementById('reg-password-confirm').value;
+            const nickname = document.getElementById('reg-nickname').value.trim();
+
+            if (!username || !password || !nickname) return alert('모든 항목을 입력해 주세요.');
+            if (password !== passwordConfirm) return alert('비밀번호가 일치하지 않습니다.');
+
+            socket.emit('register_account', { username, password, nickname }, (res) => {
                 if (res.success) {
-                    myNickname = res.nickname;
-                    document.getElementById('my-nickname-display').innerText = myNickname;
-                    document.getElementById('user-bar').style.display = 'block';
-                    switchView('lobby');
-                    renderLobby(res.lobbyData);
+                    alert('회원가입이 완료되었습니다! 로그인해 주세요.');
+                    tabLoginBtn.click();
+                    document.getElementById('login-username').value = username;
+                    document.getElementById('login-password').value = '';
+                } else {
+                    alert(res.message || '회원가입에 실패했습니다.');
                 }
             });
+        };
+
+        document.getElementById('login-submit-btn').onclick = () => {
+            const username = document.getElementById('login-username').value.trim();
+            const password = document.getElementById('login-password').value;
+
+            if (!username || !password) return alert('아이디와 비밀번호를 입력해 주세요.');
+
+            socket.emit('login_account', { username, password }, (res) => {
+                if (res.success) {
+                    currentUser = res.user;
+                    isAdminUser = res.isAdmin;
+                    if (res.shopItems) shopItems = res.shopItems;
+
+                    updateHeaderProfile(currentUser, isAdminUser);
+                    document.getElementById('user-bar').style.display = 'block';
+
+                    if (isAdminUser) {
+                        document.getElementById('admin-panel').style.display = 'block';
+                        if (res.adminMetrics) renderAdminMetrics(res.adminMetrics);
+                    }
+
+                    if (res.reconnected) {
+                        myRole = res.role;
+                        enterGameRoom(res.roomState);
+                    } else {
+                        switchView('lobby');
+                        renderLobby(res.lobbyData);
+                    }
+                } else {
+                    alert(res.message || '로그인에 실패했습니다.');
+                }
+            });
+        };
+
+        function updateHeaderProfile(user, isAdmin) {
+            if (!user) return;
+            const badge = document.getElementById('user-profile-badge');
+            const adminTag = isAdmin ? '<span style="color: var(--gold-color); font-weight: bold;"> [어드민]</span>' : '';
+            badge.innerHTML = `<strong>${user.nickname}</strong>${adminTag} [${user.rating}점 | ${user.wins}승 ${user.losses}패]`;
         }
 
-        loginBtn.addEventListener('click', handleLogin);
-        nicknameInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') handleLogin();
+        socket.on('admin_metrics_update', (metrics) => {
+            renderAdminMetrics(metrics);
         });
+
+        function renderAdminMetrics(m) {
+            if (!m) return;
+            document.getElementById('admin-ram-usage').innerText = `${m.rssMb} MB / 512 MB (${m.memPercent}%)`;
+            document.getElementById('admin-heap-usage').innerText = `${m.heapUsedMb} MB / ${m.heapTotalMb} MB`;
+            document.getElementById('admin-users-count').innerText = `${m.activeUsers}명`;
+            document.getElementById('admin-rooms-count').innerText = `${m.activeRooms}개`;
+            document.getElementById('admin-db-count').innerText = `${m.totalRegisteredUsers}명`;
+
+            const min = Math.floor(m.uptimeSec / 60);
+            const sec = m.uptimeSec % 60;
+            document.getElementById('admin-uptime').innerText = `${min}분 ${sec}초`;
+        }
 
         // --- 2. 로비 및 방 이벤트 ---
         const createRoomModal = document.getElementById('create-room-modal');
@@ -797,8 +1038,8 @@
                 const li = document.createElement('li');
                 li.className = 'user-item';
                 li.innerHTML = `
-                    <span>${u.nickname}</span>
-                    <span class="user-status-badge">온라인</span>
+                    <span><strong>${u.nickname}</strong></span>
+                    <span class="user-stats-pill">${u.rating}점 (${u.wins}승 ${u.losses}패)</span>
                 `;
                 usersUl.appendChild(li);
             });
@@ -841,7 +1082,38 @@
             });
         };
 
-        // --- 3. 게임 룸 및 증강 팝업 ---
+        // --- 3. 상점 및 아이템 이벤트 ---
+        const shopModal = document.getElementById('shop-modal');
+        const openShopBtn = document.getElementById('open-shop-btn');
+        const closeShopModalBtn = document.getElementById('close-shop-modal-btn');
+
+        openShopBtn.onclick = () => {
+            renderShopItems();
+            shopModal.classList.add('active');
+        };
+        closeShopModalBtn.onclick = () => { shopModal.classList.remove('active'); };
+
+        function renderShopItems() {
+            const container = document.getElementById('shop-items-container');
+            container.innerHTML = '';
+
+            shopItems.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'augment-card';
+                card.innerHTML = `
+                    <h4><span>${item.name}</span><span style="color: var(--gold-color);">${item.price} 💰</span></h4>
+                    <p>${item.desc}</p>
+                `;
+                card.onclick = () => {
+                    socket.emit('buy_item', { itemId: item.id }, (res) => {
+                        alert(res.message);
+                    });
+                };
+                container.appendChild(card);
+            });
+        }
+
+        // --- 4. 게임 룸 및 타이머 컨트롤 ---
         const leaveRoomBtn = document.getElementById('leave-room-btn');
         const passBtn = document.getElementById('pass-btn');
         const resignBtn = document.getElementById('resign-btn');
@@ -873,14 +1145,66 @@
             locks = roomState.locks || {};
             turn = roomState.currentTurn;
             lastMove = null;
+            activeItemTargetMode = null;
 
             document.getElementById('room-title-display').innerText = roomState.title;
-            const roleText = myRole === 'black' ? '흑 (Black)' : myRole === 'white' ? '백 (White)' : '관전자';
+            const roleText = myRole === 'black' ? '흑' : myRole === 'white' ? '백' : '관전자';
             document.getElementById('my-role-display').innerText = roleText;
 
             updateRoomUI(roomState);
             switchView('game');
             drawBoard();
+        }
+
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60);
+            const s = seconds % 60;
+            return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+        }
+
+        function updateTimerBadge(elementId, timeObj) {
+            const badge = document.getElementById(elementId);
+            if (!badge || !timeObj) return;
+
+            if (timeObj.isByoYomi) {
+                badge.className = 'timer-badge byoyomi';
+                badge.innerText = `⏱️ ${timeObj.byoYomi}초 (초읽기!)`;
+            } else {
+                badge.className = 'timer-badge';
+                badge.innerText = `⏱️ ${formatTime(timeObj.mainTime)}`;
+            }
+        }
+
+        socket.on('timer_tick', (data) => {
+            if (data.timeState) {
+                updateTimerBadge('black-timer', data.timeState.black);
+                updateTimerBadge('white-timer', data.timeState.white);
+            }
+        });
+
+        function renderAugmentCard(card, onClick) {
+            const cardEl = document.createElement('div');
+            const cardRarityClass = `card-${card.rarity}`;
+            cardEl.className = `augment-card ${cardRarityClass}`;
+
+            const tagClass = card.category === 'growth' ? 'tag-growth' : card.category === 'attack' ? 'tag-attack' : 'tag-defense';
+            const tagText = card.category === 'growth' ? '성장' : card.category === 'attack' ? '공격' : '방어';
+
+            const rarityClass = `rarity-${card.rarity}`;
+            const rarityText = card.rarity === 'common' ? '일반' : card.rarity === 'rare' ? '희귀' : card.rarity === 'epic' ? '영웅' : '전설';
+
+            cardEl.innerHTML = `
+                <h4>
+                    <span>
+                        <span class="category-tag ${tagClass}">${tagText}</span>
+                        <span class="rarity-tag ${rarityClass}">${rarityText}</span>
+                        ${card.name}
+                    </span>
+                </h4>
+                <p>${card.desc}</p>
+            `;
+            cardEl.onclick = onClick;
+            return cardEl;
         }
 
         socket.on('initial_augment_options', (data) => {
@@ -889,19 +1213,10 @@
             container.innerHTML = '';
 
             data.choices.forEach(card => {
-                const cardEl = document.createElement('div');
-                cardEl.className = 'augment-card';
-                const tagClass = card.category === 'growth' ? 'tag-growth' : card.category === 'attack' ? 'tag-attack' : 'tag-defense';
-                const tagText = card.category === 'growth' ? '성장' : card.category === 'attack' ? '공격' : '방어';
-
-                cardEl.innerHTML = `
-                    <h4><span class="category-tag ${tagClass}">${tagText}</span>${card.name}</h4>
-                    <p>${card.desc}</p>
-                `;
-                cardEl.onclick = () => {
+                const cardEl = renderAugmentCard(card, () => {
                     socket.emit('select_initial_augment', { augmentId: card.id });
                     modal.classList.remove('active');
-                };
+                });
                 container.appendChild(cardEl);
             });
 
@@ -918,56 +1233,70 @@
             drawBoard();
         });
 
-        function getCategoryTagHtml(augmentId) {
-            const growthList = ['eye_creation', 'corner_master', 'knight_move', 'comeback_king', 'xp_boost', 'center_point'];
-            const attackList = ['atari_strike', 'cutting_edge', 'net_trap', 'double_place', 'push_stone', 'vampire'];
-            if (growthList.includes(augmentId)) return '<span class="category-tag tag-growth">성장</span>';
-            if (attackList.includes(augmentId)) return '<span class="category-tag tag-attack">공격</span>';
-            return '<span class="category-tag tag-defense">방어</span>';
+        function renderInventoryHtml(items, color) {
+            let html = '';
+            for (let i = 0; i < 3; i++) {
+                if (items[i]) {
+                    html += `<div class="inventory-slot has-item" onclick="triggerUseItem('${items[i]}', '${color}')">${getItemName(items[i])}</div>`;
+                } else {
+                    html += `<div class="inventory-slot">빈 슬롯</div>`;
+                }
+            }
+            return html;
         }
+
+        function getItemName(itemId) {
+            const found = shopItems.find(i => i.id === itemId);
+            return found ? found.name : itemId;
+        }
+
+        window.triggerUseItem = function(itemId, color) {
+            if (myRole !== color || myRole !== turn) return alert('본인 차례일 때만 아이템을 사용할 수 있습니다.');
+
+            if (itemId === 'extra_turn' || itemId === 'gold_elixir' || itemId === 'atari_radar') {
+                socket.emit('use_item', { itemId }, (res) => {
+                    if (!res.success) alert(res.message);
+                });
+            } else if (itemId === 'target_bomb') {
+                alert('파괴할 상대방의 돌을 바둑판에서 클릭하세요.');
+                activeItemTargetMode = 'target_bomb';
+            } else if (itemId === 'position_swap') {
+                alert('1) 위치를 바꿀 내 돌을 클릭하고, 2) 이어서 상대 돌을 클릭하세요.');
+                activeItemTargetMode = 'position_swap_step1';
+                swapFirstStone = null;
+            } else if (itemId === 'emergency_shield') {
+                alert('보호막을 적용할 내 돌을 바둑판에서 클릭하세요.');
+                activeItemTargetMode = 'emergency_shield';
+            }
+        };
 
         function updateRoomUI(roomState) {
             const stats = roomState.playerStats;
             const blackPlayer = roomState.players.black;
             const whitePlayer = roomState.players.white;
 
-            document.getElementById('current-turn-display').innerText = roomState.currentTurn === 'black' ? '흑 (Black)' : '백 (White)';
+            document.getElementById('current-turn-display').innerText = roomState.currentTurn === 'black' ? '흑' : '백';
 
-            // 흑 플레이어 정보
-            const blackName = blackPlayer ? blackPlayer.nickname : '대기 중...';
-            const blackXpTarget = stats.black.level * 10;
-            const blackXpPercent = Math.min(100, Math.floor((stats.black.xp / blackXpTarget) * 100));
-            const blackAugmentsHtml = stats.black.augments.length > 0
-                ? stats.black.augments.map(id => getCategoryTagHtml(id) + id).join('<br>')
-                : '없음';
+            document.getElementById('black-name-display').innerText = `흑: ${blackPlayer ? blackPlayer.nickname : '대기 중...'}`;
+            const blackTargetXp = LEVEL_REQ[stats.black.level - 1] || 200;
+            const blackXpPercent = stats.black.level >= 6 ? 100 : Math.min(100, Math.floor((stats.black.xp / blackTargetXp) * 100));
+            document.getElementById('black-xp-fill').style.width = `${blackXpPercent}%`;
+            document.getElementById('black-stats-detail').innerHTML = `XP: ${stats.black.xp}/${blackTargetXp} | <span class="gold-badge">골드: ${stats.black.gold} 💰</span> | 사석: ${stats.black.captured || 0}개`;
+            document.getElementById('black-inventory').innerHTML = renderInventoryHtml(stats.black.items, 'black');
+            document.getElementById('black-augments-detail').innerText = `증강 소지: ${stats.black.augments.length}개 / 6개`;
 
-            document.getElementById('black-info').innerHTML = `
-                <div class="player-header-line">
-                    <span class="player-name">흑: ${blackName}</span>
-                    <span class="player-level-badge">Lv.${stats.black.level}</span>
-                </div>
-                <div class="xp-bar-container"><div class="xp-bar-fill" style="width: ${blackXpPercent}%;"></div></div>
-                <div class="player-detail">XP: ${stats.black.xp}/${blackXpTarget} | 잡은 사석: ${stats.black.captured || 0}개</div>
-                <div class="player-detail" style="margin-top: 4px;">증강 목록:<br>${blackAugmentsHtml}</div>
-            `;
+            document.getElementById('white-name-display').innerText = `백: ${whitePlayer ? whitePlayer.nickname : '대기 중...'}`;
+            const whiteTargetXp = LEVEL_REQ[stats.white.level - 1] || 200;
+            const whiteXpPercent = stats.white.level >= 6 ? 100 : Math.min(100, Math.floor((stats.white.xp / whiteTargetXp) * 100));
+            document.getElementById('white-xp-fill').style.width = `${whiteXpPercent}%`;
+            document.getElementById('white-stats-detail').innerHTML = `XP: ${stats.white.xp}/${whiteTargetXp} | <span class="gold-badge">골드: ${stats.white.gold} 💰</span> | 사석: ${stats.white.captured || 0}개`;
+            document.getElementById('white-inventory').innerHTML = renderInventoryHtml(stats.white.items, 'white');
+            document.getElementById('white-augments-detail').innerText = `증강 소지: ${stats.white.augments.length}개 / 6개`;
 
-            // 백 플레이어 정보
-            const whiteName = whitePlayer ? whitePlayer.nickname : '대기 중...';
-            const whiteXpTarget = stats.white.level * 10;
-            const whiteXpPercent = Math.min(100, Math.floor((stats.white.xp / whiteXpTarget) * 100));
-            const whiteAugmentsHtml = stats.white.augments.length > 0
-                ? stats.white.augments.map(id => getCategoryTagHtml(id) + id).join('<br>')
-                : '없음';
-
-            document.getElementById('white-info').innerHTML = `
-                <div class="player-header-line">
-                    <span class="player-name">백: ${whiteName}</span>
-                    <span class="player-level-badge">Lv.${stats.white.level}</span>
-                </div>
-                <div class="xp-bar-container"><div class="xp-bar-fill" style="width: ${whiteXpPercent}%;"></div></div>
-                <div class="player-detail">XP: ${stats.white.xp}/${whiteXpTarget} | 잡은 사석: ${stats.white.captured || 0}개</div>
-                <div class="player-detail" style="margin-top: 4px;">증강 목록:<br>${whiteAugmentsHtml}</div>
-            `;
+            if (roomState.timeState) {
+                updateTimerBadge('black-timer', roomState.timeState.black);
+                updateTimerBadge('white-timer', roomState.timeState.white);
+            }
         }
 
         function drawBoard() {
@@ -998,6 +1327,7 @@
             });
 
             drawLocks();
+            drawShields();
             drawStones();
             drawHoverPreview();
             drawLastMoveMarker();
@@ -1012,6 +1342,20 @@
                 ctx.fillStyle = 'rgba(248, 81, 73, 0.35)';
                 ctx.fill();
                 ctx.strokeStyle = '#f85149';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            });
+        }
+
+        function drawShields() {
+            if (!shields) return;
+            Object.keys(shields).forEach(key => {
+                const [x, y] = key.split(',').map(Number);
+                ctx.beginPath();
+                ctx.arc(padding + x * cellSize, padding + y * cellSize, cellSize * 0.45, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(88, 166, 255, 0.25)';
+                ctx.fill();
+                ctx.strokeStyle = '#58a6ff';
                 ctx.lineWidth = 2;
                 ctx.stroke();
             });
@@ -1059,12 +1403,22 @@
         function drawHoverPreview() {
             if (!hoverPos || myRole !== turn || myRole === 'spectator') return;
             const { x, y } = hoverPos;
-            if (x < 0 || x >= size || y < 0 || y >= size || boardState[y][x] !== null) return;
+            if (x < 0 || x >= size || y < 0 || y >= size) return;
 
-            ctx.beginPath();
-            ctx.arc(padding + x * cellSize, padding + y * cellSize, cellSize * 0.44, 0, Math.PI * 2);
-            ctx.fillStyle = myRole === 'black' ? 'rgba(0, 0, 0, 0.4)' : 'rgba(255, 255, 255, 0.5)';
-            ctx.fill();
+            if (activeItemTargetMode) {
+                ctx.beginPath();
+                ctx.arc(padding + x * cellSize, padding + y * cellSize, cellSize * 0.44, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(241, 224, 90, 0.5)';
+                ctx.fill();
+                return;
+            }
+
+            if (!boardState[y][x]) {
+                ctx.beginPath();
+                ctx.arc(padding + x * cellSize, padding + y * cellSize, cellSize * 0.44, 0, Math.PI * 2);
+                ctx.fillStyle = myRole === 'black' ? 'rgba(0, 0, 0, 0.4)' : 'rgba(255, 255, 255, 0.5)';
+                ctx.fill();
+            }
         }
 
         canvas.addEventListener('mousemove', (e) => {
@@ -1098,7 +1452,45 @@
             const x = Math.round(mouseX / cellSize);
             const y = Math.round(mouseY / cellSize);
 
-            if (x >= 0 && x < size && y >= 0 && y < size && !boardState[y][x]) {
+            if (x < 0 || x >= size || y < 0 || y >= size) return;
+
+            if (activeItemTargetMode === 'target_bomb') {
+                socket.emit('use_item', { itemId: 'target_bomb', targetPos: { x, y } }, (res) => {
+                    if (!res.success) alert(res.message);
+                });
+                activeItemTargetMode = null;
+                return;
+            }
+
+            if (activeItemTargetMode === 'position_swap_step1') {
+                if (boardState[y][x] !== myRole) return alert('본인의 돌 위치를 선택해 주세요.');
+                swapFirstStone = { x, y };
+                activeItemTargetMode = 'position_swap_step2';
+                alert('교환할 상대방의 돌을 선택해 주세요.');
+                return;
+            }
+
+            if (activeItemTargetMode === 'position_swap_step2') {
+                const enemyColor = myRole === 'black' ? 'white' : 'black';
+                if (boardState[y][x] !== enemyColor) return alert('상대방의 돌 위치를 선택해 주세요.');
+                socket.emit('use_item', { itemId: 'position_swap', targetPos: swapFirstStone, swapPos: { x, y } }, (res) => {
+                    if (!res.success) alert(res.message);
+                });
+                activeItemTargetMode = null;
+                swapFirstStone = null;
+                return;
+            }
+
+            if (activeItemTargetMode === 'emergency_shield') {
+                if (boardState[y][x] !== myRole) return alert('본인의 돌 위치를 선택해 주세요.');
+                socket.emit('use_item', { itemId: 'emergency_shield', targetPos: { x, y } }, (res) => {
+                    if (!res.success) alert(res.message);
+                });
+                activeItemTargetMode = null;
+                return;
+            }
+
+            if (!boardState[y][x]) {
                 socket.emit('place_stone', { x, y });
             }
         });
@@ -1120,6 +1512,7 @@
                 currentRoomState.playerStats = data.stats;
                 currentRoomState.currentTurn = data.nextTurn;
                 currentRoomState.locks = locks;
+                currentRoomState.shields = shields;
                 updateRoomUI(currentRoomState);
             }
             appendLog(data.log);
@@ -1132,19 +1525,10 @@
             container.innerHTML = '';
 
             data.choices.forEach(card => {
-                const cardEl = document.createElement('div');
-                cardEl.className = 'augment-card';
-                const tagClass = card.category === 'growth' ? 'tag-growth' : card.category === 'attack' ? 'tag-attack' : 'tag-defense';
-                const tagText = card.category === 'growth' ? '성장' : card.category === 'attack' ? '공격' : '방어';
-
-                cardEl.innerHTML = `
-                    <h4><span class="category-tag ${tagClass}">${tagText}</span>${card.name}</h4>
-                    <p>${card.desc}</p>
-                `;
-                cardEl.onclick = () => {
+                const cardEl = renderAugmentCard(card, () => {
                     socket.emit('select_augment', { augmentId: card.id });
                     modal.classList.remove('active');
-                };
+                });
                 container.appendChild(cardEl);
             });
 
@@ -1156,7 +1540,7 @@
             drawBoard();
             const modal = document.getElementById('game-over-modal');
             document.getElementById('game-over-title').innerText = '대국 종료';
-            document.getElementById('game-over-msg').innerText = `${data.winnerNickname} (${data.winner === 'black' ? '흑' : '백'}) 승리!`;
+            document.getElementById('game-over-msg').innerText = data.log || `${data.winnerNickname} (${data.winner === 'black' ? '흑' : '백'}) 승리!`;
             modal.classList.add('active');
         });
 
