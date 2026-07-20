@@ -815,6 +815,27 @@
 
     </div>
 
+    <!-- 🌟 통합 커스텀 알림 팝업 모달 -->
+    <div class="modal" id="custom-alert-modal">
+        <div class="modal-content" style="max-width: 440px;">
+            <h3 id="custom-alert-title">알림</h3>
+            <p id="custom-alert-msg" style="font-size: 0.95rem; color: #fff; margin: 18px 0; line-height: 1.5; word-break: break-word;"></p>
+            <button class="btn" id="custom-alert-confirm-btn" style="width: 100%;">확인</button>
+        </div>
+    </div>
+
+    <!-- 🌟 통합 커스텀 확인(Confirm / 5초 카운트다운) 모달 -->
+    <div class="modal" id="custom-confirm-modal">
+        <div class="modal-content" style="max-width: 460px;">
+            <h3 id="custom-confirm-title" style="color: var(--danger-color);">경고</h3>
+            <p id="custom-confirm-msg" style="font-size: 0.95rem; color: #fff; margin: 18px 0; line-height: 1.5; word-break: break-word;"></p>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-secondary" style="flex: 1;" id="custom-confirm-cancel-btn">취소 (5s)</button>
+                <button class="btn btn-danger" style="flex: 1;" id="custom-confirm-action-btn">확인</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 방 만들기 모달 -->
     <div class="modal" id="create-room-modal">
         <div class="modal-content">
@@ -869,6 +890,63 @@
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
+
+        // 🌟 커스텀 통합 알림 모달 헬퍼 함수
+        function showCustomAlert(msg, title = '알림') {
+            const modal = document.getElementById('custom-alert-modal');
+            document.getElementById('custom-alert-title').innerText = title;
+            document.getElementById('custom-alert-msg').innerText = msg;
+            modal.classList.add('active');
+
+            return new Promise((resolve) => {
+                document.getElementById('custom-alert-confirm-btn').onclick = () => {
+                    modal.classList.remove('active');
+                    resolve();
+                };
+            });
+        }
+
+        // 🌟 커스텀 통합 확인(Confirm + 5초 카운트다운) 모달 헬퍼 함수
+        let confirmCountdownInterval = null;
+        function showCustomConfirm({ title = '확인', msg, actionText = '확인', countdownSec = 5 }, onConfirm, onCancel) {
+            const modal = document.getElementById('custom-confirm-modal');
+            const cancelBtn = document.getElementById('custom-confirm-cancel-btn');
+            const actionBtn = document.getElementById('custom-confirm-action-btn');
+
+            document.getElementById('custom-confirm-title').innerText = title;
+            document.getElementById('custom-confirm-msg').innerText = msg;
+            actionBtn.innerText = actionText;
+
+            let remainingSec = countdownSec;
+            cancelBtn.innerText = `취소 (${remainingSec}s)`;
+
+            if (confirmCountdownInterval) clearInterval(confirmCountdownInterval);
+
+            modal.classList.add('active');
+
+            confirmCountdownInterval = setInterval(() => {
+                remainingSec -= 1;
+                if (remainingSec <= 0) {
+                    clearInterval(confirmCountdownInterval);
+                    modal.classList.remove('active');
+                    if (typeof onCancel === 'function') onCancel();
+                } else {
+                    cancelBtn.innerText = `취소 (${remainingSec}s)`;
+                }
+            }, 1000);
+
+            actionBtn.onclick = () => {
+                clearInterval(confirmCountdownInterval);
+                modal.classList.remove('active');
+                if (typeof onConfirm === 'function') onConfirm();
+            };
+
+            cancelBtn.onclick = () => {
+                clearInterval(confirmCountdownInterval);
+                modal.classList.remove('active');
+                if (typeof onCancel === 'function') onCancel();
+            };
+        }
 
         const views = {
             login: document.getElementById('login-view'),
@@ -931,17 +1009,18 @@
             const passwordConfirm = document.getElementById('reg-password-confirm').value;
             const nickname = document.getElementById('reg-nickname').value.trim();
 
-            if (!username || !password || !nickname) return alert('모든 항목을 입력해 주세요.');
-            if (password !== passwordConfirm) return alert('비밀번호가 일치하지 않습니다.');
+            if (!username || !password || !nickname) return showCustomAlert('모든 항목을 입력해 주세요.');
+            if (password !== passwordConfirm) return showCustomAlert('비밀번호가 일치하지 않습니다.');
 
             socket.emit('register_account', { username, password, nickname }, (res) => {
                 if (res.success) {
-                    alert('회원가입이 완료되었습니다! 로그인해 주세요.');
-                    tabLoginBtn.click();
-                    document.getElementById('login-username').value = username;
-                    document.getElementById('login-password').value = '';
+                    showCustomAlert('회원가입이 완료되었습니다! 로그인해 주세요.').then(() => {
+                        tabLoginBtn.click();
+                        document.getElementById('login-username').value = username;
+                        document.getElementById('login-password').value = '';
+                    });
                 } else {
-                    alert(res.message || '회원가입에 실패했습니다.');
+                    showCustomAlert(res.message || '회원가입에 실패했습니다.');
                 }
             });
         };
@@ -950,7 +1029,7 @@
             const username = document.getElementById('login-username').value.trim();
             const password = document.getElementById('login-password').value;
 
-            if (!username || !password) return alert('아이디와 비밀번호를 입력해 주세요.');
+            if (!username || !password) return showCustomAlert('아이디와 비밀번호를 입력해 주세요.');
 
             socket.emit('login_account', { username, password }, (res) => {
                 if (res.success) {
@@ -974,7 +1053,7 @@
                         renderLobby(res.lobbyData);
                     }
                 } else {
-                    alert(res.message || '로그인에 실패했습니다.');
+                    showCustomAlert(res.message || '로그인에 실패했습니다.');
                 }
             });
         };
@@ -1022,7 +1101,7 @@
                     myRole = res.role;
                     enterGameRoom(res.roomState);
                 } else {
-                    alert(res.message || '방 생성에 실패했습니다.');
+                    showCustomAlert(res.message || '방 생성에 실패했습니다.');
                 }
             });
         };
@@ -1077,7 +1156,7 @@
                     myRole = res.role;
                     enterGameRoom(res.roomState);
                 } else {
-                    alert(res.message || '방 입장에 실패했습니다.');
+                    showCustomAlert(res.message || '방 입장에 실패했습니다.');
                 }
             });
         };
@@ -1106,36 +1185,63 @@
                 `;
                 card.onclick = () => {
                     socket.emit('buy_item', { itemId: item.id }, (res) => {
-                        alert(res.message);
+                        showCustomAlert(res.message);
                     });
                 };
                 container.appendChild(card);
             });
         }
 
-        // --- 4. 게임 룸 및 타이머 컨트롤 ---
+        // --- 4. 게임 룸 및 컨트롤 (로비 나가기 5초 카운트다운 커스텀 모달 반영) ---
         const leaveRoomBtn = document.getElementById('leave-room-btn');
         const passBtn = document.getElementById('pass-btn');
         const resignBtn = document.getElementById('resign-btn');
 
         leaveRoomBtn.onclick = () => {
-            socket.emit('leave_room', () => {
-                switchView('lobby');
-            });
+            const isPlayerInGame = (myRole === 'black' || myRole === 'white') && 
+                                  currentRoomState && 
+                                  (currentRoomState.status === 'playing' || currentRoomState.status === 'selecting_augment');
+
+            if (isPlayerInGame) {
+                showCustomConfirm({
+                    title: '⚠️ 대국 중 나가기 경고',
+                    msg: '대국 진행 도중 로비로 나가시면 자동 기권패 처리됩니다. 정말 나가시겠습니까?',
+                    actionText: '퇴장하기 (자동 기권)',
+                    countdownSec: 5
+                }, () => {
+                    socket.emit('leave_room', () => {
+                        switchView('lobby');
+                    });
+                });
+            } else {
+                socket.emit('leave_room', () => {
+                    switchView('lobby');
+                });
+            }
         };
 
         passBtn.onclick = () => {
-            if (myRole !== turn || myRole === 'spectator') return alert('현재 본인 차례가 아닙니다.');
-            if (confirm('턴을 패스하시겠습니까? (양측 연속 패스 시 계가로 대국 종료)')) {
+            if (myRole !== turn || myRole === 'spectator') return showCustomAlert('현재 본인 차례가 아닙니다.');
+            showCustomConfirm({
+                title: '턴 패스 확인',
+                msg: '턴을 패스하시겠습니까? (양측 연속 패스 시 계가로 대국 종료)',
+                actionText: '패스하기',
+                countdownSec: 5
+            }, () => {
                 socket.emit('pass_turn');
-            }
+            });
         };
 
         resignBtn.onclick = () => {
-            if (myRole === 'spectator') return alert('관전자는 기권할 수 없습니다.');
-            if (confirm('정말로 기권하시겠습니까? 상대방의 불계승으로 대국이 종료됩니다.')) {
+            if (myRole === 'spectator') return showCustomAlert('관전자는 기권할 수 없습니다.');
+            showCustomConfirm({
+                title: '대국 기권 확인',
+                msg: '정말로 기권하시겠습니까? 상대방의 불계승으로 대국이 종료됩니다.',
+                actionText: '기권하기',
+                countdownSec: 5
+            }, () => {
                 socket.emit('resign');
-            }
+            });
         };
 
         function enterGameRoom(roomState) {
@@ -1251,21 +1357,21 @@
         }
 
         window.triggerUseItem = function(itemId, color) {
-            if (myRole !== color || myRole !== turn) return alert('본인 차례일 때만 아이템을 사용할 수 있습니다.');
+            if (myRole !== color || myRole !== turn) return showCustomAlert('본인 차례일 때만 아이템을 사용할 수 있습니다.');
 
             if (itemId === 'extra_turn' || itemId === 'gold_elixir' || itemId === 'atari_radar') {
                 socket.emit('use_item', { itemId }, (res) => {
-                    if (!res.success) alert(res.message);
+                    if (!res.success) showCustomAlert(res.message);
                 });
             } else if (itemId === 'target_bomb') {
-                alert('파괴할 상대방의 돌을 바둑판에서 클릭하세요.');
+                showCustomAlert('파괴할 상대방의 돌을 바둑판에서 클릭하세요.');
                 activeItemTargetMode = 'target_bomb';
             } else if (itemId === 'position_swap') {
-                alert('1) 위치를 바꿀 내 돌을 클릭하고, 2) 이어서 상대 돌을 클릭하세요.');
+                showCustomAlert('1) 위치를 바꿀 내 돌을 클릭하고, 2) 이어서 상대 돌을 클릭하세요.');
                 activeItemTargetMode = 'position_swap_step1';
                 swapFirstStone = null;
             } else if (itemId === 'emergency_shield') {
-                alert('보호막을 적용할 내 돌을 바둑판에서 클릭하세요.');
+                showCustomAlert('보호막을 적용할 내 돌을 바둑판에서 클릭하세요.');
                 activeItemTargetMode = 'emergency_shield';
             }
         };
@@ -1456,25 +1562,25 @@
 
             if (activeItemTargetMode === 'target_bomb') {
                 socket.emit('use_item', { itemId: 'target_bomb', targetPos: { x, y } }, (res) => {
-                    if (!res.success) alert(res.message);
+                    if (!res.success) showCustomAlert(res.message);
                 });
                 activeItemTargetMode = null;
                 return;
             }
 
             if (activeItemTargetMode === 'position_swap_step1') {
-                if (boardState[y][x] !== myRole) return alert('본인의 돌 위치를 선택해 주세요.');
+                if (boardState[y][x] !== myRole) return showCustomAlert('본인의 돌 위치를 선택해 주세요.');
                 swapFirstStone = { x, y };
                 activeItemTargetMode = 'position_swap_step2';
-                alert('교환할 상대방의 돌을 선택해 주세요.');
+                showCustomAlert('교환할 상대방의 돌을 선택해 주세요.');
                 return;
             }
 
             if (activeItemTargetMode === 'position_swap_step2') {
                 const enemyColor = myRole === 'black' ? 'white' : 'black';
-                if (boardState[y][x] !== enemyColor) return alert('상대방의 돌 위치를 선택해 주세요.');
+                if (boardState[y][x] !== enemyColor) return showCustomAlert('상대방의 돌 위치를 선택해 주세요.');
                 socket.emit('use_item', { itemId: 'position_swap', targetPos: swapFirstStone, swapPos: { x, y } }, (res) => {
-                    if (!res.success) alert(res.message);
+                    if (!res.success) showCustomAlert(res.message);
                 });
                 activeItemTargetMode = null;
                 swapFirstStone = null;
@@ -1482,9 +1588,9 @@
             }
 
             if (activeItemTargetMode === 'emergency_shield') {
-                if (boardState[y][x] !== myRole) return alert('본인의 돌 위치를 선택해 주세요.');
+                if (boardState[y][x] !== myRole) return showCustomAlert('본인의 돌 위치를 선택해 주세요.');
                 socket.emit('use_item', { itemId: 'emergency_shield', targetPos: { x, y } }, (res) => {
-                    if (!res.success) alert(res.message);
+                    if (!res.success) showCustomAlert(res.message);
                 });
                 activeItemTargetMode = null;
                 return;

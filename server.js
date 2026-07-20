@@ -440,7 +440,6 @@ function getLobbyData() {
 function broadcastLobbyData() {
     io.emit('lobby_update', getLobbyData());
 
-    // 어드민 사용자(mini4950)에게 실시간 서버 메모리 및 용량 브로드캐스트
     Object.values(users).forEach(u => {
         if (u.username === 'mini4950') {
             io.to(u.id).emit('admin_metrics_update', getAdminServerMetrics());
@@ -462,7 +461,7 @@ function leaveUserFromRoom(socketId) {
     if (room.players.black && room.players.black.socketId === socketId) {
         room.players.black = null;
         roleLeft = '흑';
-    } else if (room.players.white && room.players.white.socketId === socket.id) {
+    } else if (room.players.white && room.players.white.socketId === socketId) {
         room.players.white = null;
         roleLeft = '백';
     } else {
@@ -710,7 +709,7 @@ io.on('connection', (socket) => {
             startInitialAugmentPhase(room);
         } else {
             io.to(roomId).emit('room_state_update', getRoomSanitizedState(room));
-            io.to(roomId).emit('log_update', `${user.nickname} 님이 ${role === 'black' ? '흑' : role === 'white' ? '백' : '관전자'}(으)로 입장하셨습니다.`);
+            io.to(roomId).emit('log_update', `${user.nickname} 님이 ${role === 'black' ? '흑' : '백' : '관전자'}(으)로 입장하셨습니다.`);
         }
 
         if (typeof callback === 'function') {
@@ -943,10 +942,41 @@ io.on('connection', (socket) => {
         }
     });
 
-    // 8. 방 퇴장
+    // 8. 방 퇴장 (대국 중 퇴장 시 자동 기권패 처리)
     socket.on('leave_room', (callback) => {
         const user = users[socket.id];
         if (user && user.roomId) {
+            const room = rooms[user.roomId];
+            if (room) {
+                let color = null;
+                if (room.players.black && room.players.black.socketId === socket.id) color = 'black';
+                if (room.players.white && room.players.white.socketId === socket.id) color = 'white';
+
+                // 플레이어가 진행 중인 대국 도중 나가는 경우 -> 자동 기권패 처리
+                if (color && (room.status === 'playing' || room.status === 'selecting_augment')) {
+                    const enemyColor = color === 'black' ? 'white' : 'black';
+                    const winnerNickname = room.players[enemyColor] ? room.players[enemyColor].nickname : '상대방';
+
+                    room.status = 'finished';
+                    room.winner = enemyColor;
+                    if (room.timerInterval) clearInterval(room.timerInterval);
+
+                    recordGameResult(room, enemyColor);
+
+                    const colorKor = color === 'black' ? '흑' : '백';
+                    const logMsg = `[자동 기권] ${user.nickname}(${colorKor}) 님이 로비로 퇴장하여 기권 처리되었습니다. ${winnerNickname} 승리!`;
+
+                    io.to(room.id).emit('game_over', {
+                        winner: enemyColor,
+                        winnerNickname: winnerNickname,
+                        log: logMsg,
+                        boardState: room.boardState,
+                        stats: room.playerStats
+                    });
+                    io.to(room.id).emit('room_state_update', getRoomSanitizedState(room));
+                }
+            }
+
             socket.leave(user.roomId);
             leaveUserFromRoom(socket.id);
         }
@@ -1363,7 +1393,6 @@ server.listen(PORT, () => {
     console.log(`증강 바둑 서버가 포트 ${PORT}에서 실행 중입니다.`);
 });
 
-// 어드민 전용 2초 주기 실시간 용량/메모리/가동시간 갱신
 setInterval(() => {
     Object.values(users).forEach(u => {
         if (u.username === 'mini4950') {
