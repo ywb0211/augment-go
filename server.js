@@ -124,10 +124,10 @@ function createInitialPlayerStats() {
     };
 }
 
-function createInitialTimeState() {
+function createInitialTimeState(mainTimeSec = 300, byoYomiSec = 30) {
     return {
-        black: { mainTime: 300, byoYomi: 30, isByoYomi: false },
-        white: { mainTime: 300, byoYomi: 30, isByoYomi: false }
+        black: { mainTime: mainTimeSec, byoYomi: byoYomiSec, isByoYomi: false },
+        white: { mainTime: mainTimeSec, byoYomi: byoYomiSec, isByoYomi: false }
     };
 }
 
@@ -195,6 +195,53 @@ function getAdminServerMetrics() {
     };
 }
 
+// ------------------- 동적 랭크 점수 계산 알고리즘 ------------------- //
+function calculateDynamicRatingChange(room, winnerColor) {
+    const totalMoves = room.totalMovesPlayed || 0;
+    const matchDurationSec = Math.floor((Date.now() - (room.gameStartTime || Date.now())) / 1000);
+    const loserColor = winnerColor === 'black' ? 'white' : 'black';
+
+    // 1. 시작하자마자 나가기 (2착수 미만 또는 5초 미만) -> 점수 0점
+    if (totalMoves < 2 || matchDurationSec < 5) {
+        return { winnerGain: 0, loserLoss: 0, reason: '초반 바로 퇴장 (점수 변동 없음)' };
+    }
+
+    // 2. 10초~30초 내 조기 기권 (착수 6회 미만) -> +10점 / -10점
+    if (totalMoves < 6 || matchDurationSec < 30) {
+        return { winnerGain: 10, loserLoss: 10, reason: '조기 기권 대국 (±10점)' };
+    }
+
+    // 3. 정상/장기 대국 기여도 계수 산출 (0.0 ~ 1.0)
+    const moveFactor = Math.min(1.0, totalMoves / 50); // 50착수 기준
+    const timeFactor = Math.min(1.0, matchDurationSec / 1200); // 20분 기준
+    const matchIntensity = (moveFactor * 0.6 + timeFactor * 0.4);
+
+    // 4. 경기 박빙 정도 (사석 잡은 돌 수 차이)
+    const winnerCaptured = room.playerStats[winnerColor].captured || 0;
+    const loserCaptured = room.playerStats[loserColor].captured || 0;
+    const capDiff = Math.abs(winnerCaptured - loserCaptured);
+    const isCloseMatch = capDiff <= 4;
+
+    let winnerGain = 0;
+    let loserLoss = 0;
+
+    if (isCloseMatch) {
+        // 치열한 박빙 대국 (열심히 싸움 -> 승자 보상 크고 패자 차감 적음)
+        winnerGain = Math.round(30 + matchIntensity * 70); // 30 ~ 100 점
+        loserLoss = Math.round(15 + matchIntensity * 35);  // 15 ~ 50 점
+    } else {
+        // 일방적인 대국 (개처발림)
+        winnerGain = Math.round(20 + matchIntensity * 50); // 20 ~ 70 점
+        loserLoss = Math.round(20 + matchIntensity * 60);  // 20 ~ 80 점
+    }
+
+    return {
+        winnerGain,
+        loserLoss,
+        reason: isCloseMatch ? '치열한 박빙 대국' : '일방적 승부 대국'
+    };
+}
+
 // ------------------- 타이머 인터벌 헬퍼 ------------------- //
 function startRoomTimer(room) {
     if (room.timerInterval) clearInterval(room.timerInterval);
@@ -210,33 +257,19 @@ function startRoomTimer(room) {
             if (timeObj.mainTime <= 0) {
                 timeObj.mainTime = 0;
                 timeObj.isByoYomi = true;
-                timeObj.byoYomi = 30;
-                io.to(room.id).emit('log_update', `[초읽기 경고] ${current === 'black' ? '흑' : '백'} 제한 시간 소진! 30초 초읽기로 전환됩니다.`);
+                timeObj.byoYomi = room.byoYomiConfig || 30;
+                io.to(room.id).emit('log_update', `[초읽기 경고] ${current === 'black' ? '흑' : '백'} 제한 시간 소진! ${room.byoYomiConfig || 30}초 초읽기로 전환됩니다.`);
             }
         } else {
             timeObj.byoYomi -= 1;
             if (timeObj.byoYomi <= 0) {
                 timeObj.byoYomi = 0;
-                room.status = 'finished';
-
                 const winnerColor = current === 'black' ? 'white' : 'black';
                 const winnerName = room.players[winnerColor] ? room.players[winnerColor].nickname : '상대방';
                 const loserName = room.players[current] ? room.players[current].nickname : '플레이어';
-                room.winner = winnerColor;
 
-                recordGameResult(room, winnerColor);
-
-                const logMsg = `[시간패] ${loserName}(${current === 'black' ? '흑' : '백'}) 님이 초읽기 30초를 초과하셨습니다. ${winnerName} 시간승!`;
-
-                io.to(room.id).emit('game_over', {
-                    winner: winnerColor,
-                    winnerNickname: winnerName,
-                    log: logMsg,
-                    boardState: room.boardState,
-                    stats: room.playerStats
-                });
-                io.to(room.id).emit('room_state_update', getRoomSanitizedState(room));
-                broadcastLobbyData();
+                const logMsg = `[시간패] ${loserName}(${current === 'black' ? '흑' : '백'}) 님이 초읽기시간을 초과하셨습니다. ${winnerName} 시간승!`;
+                handleMatchEnd(room, winnerColor, logMsg);
                 clearInterval(room.timerInterval);
                 return;
             }
@@ -246,19 +279,160 @@ function startRoomTimer(room) {
     }, 1000);
 }
 
-// ------------------- 전적 DB 기록 헬퍼 ------------------- //
-function recordGameResult(room, winnerColor) {
-    if (!room.players.black || !room.players.white) return;
+// ------------------- 전적 DB 기록 & 대국 종료 및 세트 스코어 헬퍼 ------------------- //
+function recordGameResultWithDynamicRating(room, winnerColor) {
+    if (!room.players.black || !room.players.white) return { winnerGain: 0, loserLoss: 0, reason: '' };
     const blackUser = db.getUserByNickname(room.players.black.nickname);
     const whiteUser = db.getUserByNickname(room.players.white.nickname);
 
-    if (winnerColor === 'black') {
-        if (blackUser) db.updateUserStats(blackUser.username, true);
-        if (whiteUser) db.updateUserStats(whiteUser.username, false);
-    } else {
-        if (blackUser) db.updateUserStats(blackUser.username, false);
-        if (whiteUser) db.updateUserStats(whiteUser.username, true);
+    const ratingCalc = calculateDynamicRatingChange(room, winnerColor);
+    const loserColor = winnerColor === 'black' ? 'white' : 'black';
+
+    const winnerUser = winnerColor === 'black' ? blackUser : whiteUser;
+    const loserUser = loserColor === 'black' ? blackUser : whiteUser;
+
+    let updatedWinnerStats = null;
+    let updatedLoserStats = null;
+
+    if (winnerUser) {
+        updatedWinnerStats = db.updateUserStatsWithRating(winnerUser.username, true, ratingCalc.winnerGain);
     }
+    if (loserUser) {
+        updatedLoserStats = db.updateUserStatsWithRating(loserUser.username, false, ratingCalc.loserLoss);
+    }
+
+    // 소켓 사용자 객체의 인메모리 rating도 실시간 갱신
+    Object.values(users).forEach(u => {
+        if (winnerUser && u.username === winnerUser.username && updatedWinnerStats) {
+            u.rating = updatedWinnerStats.rating;
+            u.wins = updatedWinnerStats.wins;
+        }
+        if (loserUser && u.username === loserUser.username && updatedLoserStats) {
+            u.rating = updatedLoserStats.rating;
+            u.losses = updatedLoserStats.losses;
+        }
+    });
+
+    return ratingCalc;
+}
+
+function handleMatchEnd(room, winnerColor, logMessage) {
+    if (room.timerInterval) clearInterval(room.timerInterval);
+
+    const ratingCalc = recordGameResultWithDynamicRating(room, winnerColor);
+
+    room.matchScore[winnerColor] += 1;
+    const requiredWins = Math.ceil((room.matchSetGoal || 1) / 2);
+    const isSeriesEnded = room.matchScore[winnerColor] >= requiredWins;
+
+    const winnerName = room.players[winnerColor] ? room.players[winnerColor].nickname : '상대방';
+    const loserColor = winnerColor === 'black' ? 'white' : 'black';
+    const loserName = room.players[loserColor] ? room.players[loserColor].nickname : '상대방';
+
+    let finalLog = `${logMessage}\n📈 [랭크 점수 산출] ${winnerName}(승자): +${ratingCalc.winnerGain}점 | ${loserName}(패자): -${ratingCalc.loserLoss}점 (${ratingCalc.reason})`;
+
+    if (isSeriesEnded && (room.matchSetGoal || 1) > 1) {
+        finalLog += `\n🏆 [최종 우승] ${room.matchSetGoal}판 매치 최종 결과: ${winnerName} 님이 ${room.matchScore.black}:${room.matchScore.white}로 우승하셨습니다!`;
+        room.matchScore = { black: 0, white: 0 };
+    } else if ((room.matchSetGoal || 1) > 1) {
+        finalLog += `\n📊 [매치 스코어] 현재 세트 스코어 (흑 ${room.matchScore.black} : 백 ${room.matchScore.white})`;
+    }
+
+    room.status = 'finished';
+    room.winner = winnerColor;
+
+    io.to(room.id).emit('game_over', {
+        winner: winnerColor,
+        winnerNickname: winnerName,
+        log: finalLog,
+        boardState: room.boardState,
+        stats: room.playerStats,
+        matchScore: room.matchScore,
+        isSeriesEnded: isSeriesEnded,
+        ratingCalc: ratingCalc
+    });
+
+    // 대국판 및 상태 준비 대기(waiting) 상태로 즉시 리셋
+    resetRoomToWaiting(room);
+    io.to(room.id).emit('room_state_update', getRoomSanitizedState(room));
+    broadcastLobbyData();
+}
+
+function resetRoomToWaiting(room) {
+    room.status = 'waiting';
+    room.winner = null;
+    room.readiness = { black: false, white: false };
+    room.currentTurn = 'black';
+    room.boardState = Array.from(Array(BOARD_SIZE), () => Array(BOARD_SIZE).fill(null));
+    room.playerStats = createInitialPlayerStats();
+    room.timeState = createInitialTimeState(room.mainTimeConfig || 300, room.byoYomiConfig || 30);
+    room.shields = {};
+    room.locks = {};
+    room.consecutivePasses = 0;
+    room.totalMovesPlayed = 0;
+    room.gameStartTime = null;
+}
+
+// ------------------- 점수 기반 돌 자동 배치 & 무작위 결정 헬퍼 ------------------- //
+function assignStonesByRatingAndStart(room) {
+    if (!room.players.black || !room.players.white) return;
+
+    const user1 = users[room.players.black.socketId];
+    const user2 = users[room.players.white.socketId];
+
+    let rating1 = user1 ? (user1.rating || 1000) : 1000;
+    let rating2 = user2 ? (user2.rating || 1000) : 1000;
+
+    let blackPlayerObj = null;
+    let whitePlayerObj = null;
+    let isRandomRoll = false;
+
+    if (rating1 > rating2) {
+        whitePlayerObj = room.players.black;
+        blackPlayerObj = room.players.white;
+    } else if (rating2 > rating1) {
+        whitePlayerObj = room.players.white;
+        blackPlayerObj = room.players.black;
+    } else {
+        isRandomRoll = true;
+        if (Math.random() < 0.5) {
+            blackPlayerObj = room.players.black;
+            whitePlayerObj = room.players.white;
+        } else {
+            blackPlayerObj = room.players.white;
+            whitePlayerObj = room.players.black;
+        }
+    }
+
+    room.players.black = blackPlayerObj;
+    room.players.white = whitePlayerObj;
+
+    const pBlackUser = users[blackPlayerObj.socketId];
+    const pWhiteUser = users[whitePlayerObj.socketId];
+
+    const vsData = {
+        blackPlayer: {
+            nickname: blackPlayerObj.nickname,
+            rating: pBlackUser ? pBlackUser.rating || 1000 : 1000,
+            socketId: blackPlayerObj.socketId
+        },
+        whitePlayer: {
+            nickname: whitePlayerObj.nickname,
+            rating: pWhiteUser ? pWhiteUser.rating || 1000 : 1000,
+            socketId: whitePlayerObj.socketId
+        },
+        isRandomRoll: isRandomRoll
+    };
+
+    io.to(room.id).emit('match_vs_start', vsData);
+    io.to(room.id).emit('room_state_update', getRoomSanitizedState(room));
+
+    const delayMs = isRandomRoll ? 4500 : 3500;
+    setTimeout(() => {
+        if (rooms[room.id] && rooms[room.id].status === 'waiting') {
+            startInitialAugmentPhase(rooms[room.id]);
+        }
+    }, delayMs);
 }
 
 // ------------------- 바둑 모양 및 사석 검사 ------------------- //
@@ -430,7 +604,11 @@ function getLobbyData() {
             hostNickname: r.hostNickname,
             playerCount: playerNum,
             spectatorCount: r.spectators.length,
-            status: r.status
+            status: r.status,
+            isPrivate: r.isPrivate,
+            matchSetGoal: r.matchSetGoal || 1,
+            mainTimeConfig: r.mainTimeConfig || 300,
+            byoYomiConfig: r.byoYomiConfig || 30
         };
     });
 
@@ -460,9 +638,11 @@ function leaveUserFromRoom(socketId) {
     let roleLeft = null;
     if (room.players.black && room.players.black.socketId === socketId) {
         room.players.black = null;
+        room.readiness.black = false;
         roleLeft = '흑';
     } else if (room.players.white && room.players.white.socketId === socketId) {
         room.players.white = null;
+        room.readiness.white = false;
         roleLeft = '백';
     } else {
         room.spectators = room.spectators.filter(s => s.socketId !== socketId);
@@ -498,12 +678,21 @@ function getRoomSanitizedState(room) {
         locks: room.locks || {},
         status: room.status,
         winner: room.winner || null,
-        consecutivePasses: room.consecutivePasses || 0
+        consecutivePasses: room.consecutivePasses || 0,
+        isPrivate: room.isPrivate,
+        mainTimeConfig: room.mainTimeConfig || 300,
+        byoYomiConfig: room.byoYomiConfig || 30,
+        matchSetGoal: room.matchSetGoal || 1,
+        matchScore: room.matchScore || { black: 0, white: 0 },
+        readiness: room.readiness || { black: false, white: false },
+        augmentsPool: AUGMENT_POOL
     };
 }
 
 function startInitialAugmentPhase(room) {
     room.status = 'selecting_augment';
+    room.gameStartTime = Date.now();
+    room.totalMovesPlayed = 0;
     
     if (room.players.black) {
         const count = room.playerStats.black.augments.includes('scholar_eye') ? 4 : 3;
@@ -517,7 +706,7 @@ function startInitialAugmentPhase(room) {
     }
 
     io.to(room.id).emit('room_state_update', getRoomSanitizedState(room));
-    io.to(room.id).emit('log_update', '대국이 시작됩니다! 두 플레이어는 시작 증강 능력을 선택하세요.');
+    io.to(room.id).emit('log_update', '⚔️ 양측 준비 완료! 대국이 시작됩니다. 시작 증강 능력을 선택하세요.');
 }
 
 io.on('connection', (socket) => {
@@ -662,7 +851,7 @@ io.on('connection', (socket) => {
         if (typeof callback === 'function') callback({ success: true });
     });
 
-    // 3. 방 생성
+    // 3. 맞춤 규격 방 생성
     socket.on('create_room', (data, callback) => {
         const user = users[socket.id];
         if (!user) {
@@ -679,11 +868,24 @@ io.on('connection', (socket) => {
             ? data.title.trim()
             : `${user.nickname}님의 대국실`;
 
+        const isPrivate = !!(data && data.isPrivate);
+        const password = (data && data.password) ? String(data.password).trim() : '';
+        const mainTimeSec = parseInt(data.mainTimeSec) || 300;
+        const byoYomiSec = parseInt(data.byoYomiSec) || 30;
+        const matchSetGoal = parseInt(data.matchSetGoal) || 1;
+
         const newRoom = {
             id: roomId,
             title: title,
             hostId: socket.id,
             hostNickname: user.nickname,
+            isPrivate: isPrivate,
+            password: password,
+            mainTimeConfig: mainTimeSec,
+            byoYomiConfig: byoYomiSec,
+            matchSetGoal: matchSetGoal,
+            matchScore: { black: 0, white: 0 },
+            readiness: { black: false, white: false },
             players: {
                 black: { socketId: socket.id, nickname: user.nickname, disconnected: false },
                 white: null
@@ -692,13 +894,15 @@ io.on('connection', (socket) => {
             currentTurn: 'black',
             boardState: Array.from(Array(BOARD_SIZE), () => Array(BOARD_SIZE).fill(null)),
             playerStats: createInitialPlayerStats(),
-            timeState: createInitialTimeState(),
+            timeState: createInitialTimeState(mainTimeSec, byoYomiSec),
             disconnectTimers: {},
             shields: {},
             locks: {},
             consecutivePasses: 0,
             status: 'waiting',
-            winner: null
+            winner: null,
+            totalMovesPlayed: 0,
+            gameStartTime: null
         };
 
         rooms[roomId] = newRoom;
@@ -712,7 +916,7 @@ io.on('connection', (socket) => {
         broadcastLobbyData();
     });
 
-    // 4. 방 입장
+    // 4. 방 입장 (비밀번호 확인 연동)
     socket.on('join_room', (data, callback) => {
         const user = users[socket.id];
         if (!user) {
@@ -725,6 +929,13 @@ io.on('connection', (socket) => {
         if (!room) {
             if (typeof callback === 'function') callback({ success: false, message: '존재하지 않는 방입니다.' });
             return;
+        }
+
+        if (room.isPrivate) {
+            if (!data.password || String(data.password).trim() !== room.password) {
+                if (typeof callback === 'function') callback({ success: false, isPasswordRequired: true, message: '비밀번호가 일치하지 않습니다.' });
+                return;
+            }
         }
 
         if (user.roomId) {
@@ -746,18 +957,128 @@ io.on('connection', (socket) => {
         user.roomId = roomId;
         socket.join(roomId);
 
-        if (room.players.black && room.players.white && room.status === 'waiting') {
-            startInitialAugmentPhase(room);
-        } else {
-            io.to(roomId).emit('room_state_update', getRoomSanitizedState(room));
-            io.to(roomId).emit('log_update', `${user.nickname} 님이 ${role === 'black' ? '흑' : role === 'white' ? '백' : '관전자'}(으)로 입장하셨습니다.`);
-        }
+        io.to(roomId).emit('room_state_update', getRoomSanitizedState(room));
+        io.to(roomId).emit('log_update', `${user.nickname} 님이 ${role === 'black' ? '흑' : role === 'white' ? '백' : '관전자'}(으)로 입장하셨습니다.`);
 
         if (typeof callback === 'function') {
             callback({ success: true, role, roomState: getRoomSanitizedState(room) });
         }
 
         broadcastLobbyData();
+    });
+
+    // 4-1. 준비 토글 (점수 기반 돌 배치 연동 & VS 오버레이 스타트)
+    socket.on('toggle_ready', (callback) => {
+        const user = users[socket.id];
+        if (!user || !user.roomId) return;
+
+        const room = rooms[user.roomId];
+        if (!room || room.status !== 'waiting') return;
+
+        let color = null;
+        if (room.players.black && room.players.black.socketId === socket.id) color = 'black';
+        if (room.players.white && room.players.white.socketId === socket.id) color = 'white';
+
+        if (!color) {
+            if (typeof callback === 'function') callback({ success: false, message: '플레이어만 준비를 누를 수 있습니다.' });
+            return;
+        }
+
+        if (!room.players.black || !room.players.white) {
+            if (typeof callback === 'function') callback({ success: false, message: '상대 플레이어가 입장해야 준비할 수 있습니다.' });
+            return;
+        }
+
+        room.readiness[color] = !room.readiness[color];
+        const statusText = room.readiness[color] ? '준비 완료 🟢' : '준비 해제 ⚪';
+        const colorKor = color === 'black' ? '흑' : '백';
+        io.to(room.id).emit('log_update', `${user.nickname}(${colorKor}) 님이 ${statusText}`);
+
+        // 양측 준비 완료 시 점수 기반 흑/백 자동 할당 후 VS 오버레이 연출 시작!
+        if (room.readiness.black && room.readiness.white) {
+            assignStonesByRatingAndStart(room);
+        } else {
+            io.to(room.id).emit('room_state_update', getRoomSanitizedState(room));
+        }
+
+        if (typeof callback === 'function') callback({ success: true, isReady: room.readiness[color] });
+    });
+
+    // 4-2. 역할 전환 (switch_role: 관전자 <-> 선수)
+    socket.on('switch_role', (data, callback) => {
+        const user = users[socket.id];
+        if (!user || !user.roomId) return;
+
+        const room = rooms[user.roomId];
+        if (!room || room.status !== 'waiting') {
+            if (typeof callback === 'function') callback({ success: false, message: '대기 상태일 때만 역할을 변경할 수 있습니다.' });
+            return;
+        }
+
+        const targetRole = data.targetRole;
+        let currentRole = null;
+        if (room.players.black && room.players.black.socketId === socket.id) currentRole = 'black';
+        else if (room.players.white && room.players.white.socketId === socket.id) currentRole = 'white';
+        else currentRole = 'spectator';
+
+        if (currentRole === targetRole) return;
+
+        if (currentRole === 'black') {
+            room.players.black = null;
+            room.readiness.black = false;
+        } else if (currentRole === 'white') {
+            room.players.white = null;
+            room.readiness.white = false;
+        } else {
+            room.spectators = room.spectators.filter(s => s.socketId !== socket.id);
+        }
+
+        if (targetRole === 'black') {
+            if (room.players.black) {
+                if (typeof callback === 'function') callback({ success: false, message: '흑 자리가 이미 차 있습니다.' });
+                return;
+            }
+            room.players.black = { socketId: socket.id, nickname: user.nickname, disconnected: false };
+        } else if (targetRole === 'white') {
+            if (room.players.white) {
+                if (typeof callback === 'function') callback({ success: false, message: '백 자리가 이미 차 있습니다.' });
+                return;
+            }
+            room.players.white = { socketId: socket.id, nickname: user.nickname, disconnected: false };
+        } else {
+            room.spectators.push({ socketId: socket.id, nickname: user.nickname });
+        }
+
+        const roleText = targetRole === 'black' ? '흑' : targetRole === 'white' ? '백' : '관전자';
+        io.to(room.id).emit('log_update', `${user.nickname} 님이 ${roleText}(으)로 역할을 변경했습니다.`);
+        io.to(room.id).emit('room_state_update', getRoomSanitizedState(room));
+
+        if (typeof callback === 'function') callback({ success: true, newRole: targetRole });
+    });
+
+    // 4-3. 인게임 실시간 채팅 (send_room_chat)
+    socket.on('send_room_chat', (data) => {
+        const user = users[socket.id];
+        if (!user || !user.roomId) return;
+
+        const room = rooms[user.roomId];
+        if (!room) return;
+
+        const text = (data && data.text) ? String(data.text).trim() : '';
+        if (!text) return;
+
+        let role = 'spectator';
+        if (room.players.black && room.players.black.socketId === socket.id) role = 'black';
+        else if (room.players.white && room.players.white.socketId === socket.id) role = 'white';
+
+        const chatObj = {
+            senderNickname: user.nickname,
+            role: role,
+            text: text,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+
+        io.to(room.id).emit('room_chat_message', chatObj);
     });
 
     // 5. 시작 증강 선택
@@ -983,7 +1304,7 @@ io.on('connection', (socket) => {
         }
     });
 
-    // 8. 방 퇴장 (대국 진행 중인 유저 퇴장 시 자동 판정승 처리)
+    // 8. 방 퇴장 (대국 진행 중인 유저 퇴장 시 자동 판정승 처리 및 동적 점수 변동)
     socket.on('leave_room', (callback) => {
         const user = users[socket.id];
         if (user && user.roomId) {
@@ -997,24 +1318,10 @@ io.on('connection', (socket) => {
                 if (color && (room.status === 'playing' || room.status === 'selecting_augment')) {
                     const enemyColor = color === 'black' ? 'white' : 'black';
                     const winnerNickname = room.players[enemyColor] ? room.players[enemyColor].nickname : '상대방';
-
-                    room.status = 'finished';
-                    room.winner = enemyColor;
-                    if (room.timerInterval) clearInterval(room.timerInterval);
-
-                    recordGameResult(room, enemyColor);
-
                     const colorKor = color === 'black' ? '흑' : '백';
                     const logMsg = `[판정승] ${user.nickname}(${colorKor}) 님이 대국 중 퇴장하셨습니다. ${winnerNickname} 님 판정승 (불계승)!`;
 
-                    io.to(room.id).emit('game_over', {
-                        winner: enemyColor,
-                        winnerNickname: winnerNickname,
-                        log: logMsg,
-                        boardState: room.boardState,
-                        stats: room.playerStats
-                    });
-                    io.to(room.id).emit('room_state_update', getRoomSanitizedState(room));
+                    handleMatchEnd(room, enemyColor, logMsg);
                 }
             }
 
@@ -1047,33 +1354,18 @@ io.on('connection', (socket) => {
         let logMsg = `${user.nickname}(${colorKor}) 님이 패스를 했습니다.`;
 
         if (room.timeState[color].isByoYomi) {
-            room.timeState[color].byoYomi = 30;
+            room.timeState[color].byoYomi = room.byoYomiConfig || 30;
         }
 
         if (room.consecutivePasses >= 2) {
-            room.status = 'finished';
-            if (room.timerInterval) clearInterval(room.timerInterval);
-
             const blackScore = countStones(room.boardState, 'black') + room.playerStats.black.captured;
             const whiteScore = countStones(room.boardState, 'white') + room.playerStats.white.captured + 6.5;
 
             let winner = blackScore > whiteScore ? 'black' : 'white';
             let winnerNickname = winner === 'black' ? room.players.black.nickname : room.players.white.nickname;
-            room.winner = winner;
-
-            recordGameResult(room, winner);
 
             logMsg += ` [양측 패스 -> 계가 완료] 흑: ${blackScore}점 / 백: ${whiteScore}점 (덤 6.5) -> ${winnerNickname} 승리!`;
-
-            io.to(room.id).emit('game_over', {
-                winner: winner,
-                winnerNickname: winnerNickname,
-                log: logMsg,
-                boardState: room.boardState,
-                stats: room.playerStats
-            });
-            io.to(room.id).emit('room_state_update', getRoomSanitizedState(room));
-            broadcastLobbyData();
+            handleMatchEnd(room, winner, logMsg);
             return;
         }
 
@@ -1107,27 +1399,12 @@ io.on('connection', (socket) => {
         const enemyColor = color === 'black' ? 'white' : 'black';
         const winnerNickname = room.players[enemyColor] ? room.players[enemyColor].nickname : '상대방';
 
-        room.status = 'finished';
-        room.winner = enemyColor;
-        if (room.timerInterval) clearInterval(room.timerInterval);
-
-        recordGameResult(room, enemyColor);
-
         const colorKor = color === 'black' ? '흑' : '백';
         const logMsg = `${user.nickname}(${colorKor}) 님이 기권하셨습니다. ${winnerNickname} 불계승!`;
-
-        io.to(room.id).emit('game_over', {
-            winner: enemyColor,
-            winnerNickname: winnerNickname,
-            log: logMsg,
-            boardState: room.boardState,
-            stats: room.playerStats
-        });
-        io.to(room.id).emit('room_state_update', getRoomSanitizedState(room));
-        broadcastLobbyData();
+        handleMatchEnd(room, enemyColor, logMsg);
     });
 
-    // 11. 착수 (place_stone) 및 초읽기 리셋
+    // 11. 착수 (place_stone) 및 착수 횟수(totalMovesPlayed) 수집
     socket.on('place_stone', (data) => {
         const user = users[socket.id];
         if (!user || !user.roomId) return;
@@ -1152,9 +1429,10 @@ io.on('connection', (socket) => {
         }
 
         if (room.timeState[color].isByoYomi) {
-            room.timeState[color].byoYomi = 30;
+            room.timeState[color].byoYomi = room.byoYomiConfig || 30;
         }
 
+        room.totalMovesPlayed = (room.totalMovesPlayed || 0) + 1;
         room.consecutivePasses = 0;
         room.boardState[y][x] = color;
 
@@ -1400,23 +1678,9 @@ io.on('connection', (socket) => {
                             const enemyRole = role === 'black' ? 'white' : 'black';
                             const winnerName = room.players[enemyRole] ? room.players[enemyRole].nickname : '상대방';
 
-                            room.status = 'finished';
-                            room.winner = enemyRole;
-                            if (room.timerInterval) clearInterval(room.timerInterval);
-
-                            recordGameResult(room, enemyRole);
-
                             const logMsg = `[판정승] ${user.nickname}(${roleKor}) 님이 30초 이내에 재접속하지 않아 기권패 처리되었습니다. ${winnerName} 님 판정승!`;
 
-                            io.to(room.id).emit('game_over', {
-                                winner: enemyRole,
-                                winnerNickname: winnerName,
-                                log: logMsg,
-                                boardState: room.boardState,
-                                stats: room.playerStats
-                            });
-                            io.to(room.id).emit('room_state_update', getRoomSanitizedState(room));
-                            broadcastLobbyData();
+                            handleMatchEnd(room, enemyRole, logMsg);
                         }
                     }, 30000);
                 }

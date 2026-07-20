@@ -36,7 +36,7 @@
         html, body {
             width: 100vw;
             max-width: 100vw;
-            overflow-x: hidden;
+            overflow-x: hidden !important;
             background-color: var(--bg-color);
             color: var(--text-color);
             min-height: 100vh;
@@ -44,6 +44,24 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #161b22;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #30363d;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-color);
         }
 
         header {
@@ -155,19 +173,19 @@
             display: flex;
         }
 
-        input[type="text"], input[type="password"] {
+        input[type="text"], input[type="password"], select {
             width: 100%;
-            padding: 12px 16px;
+            padding: 11px 14px;
             background: #0d1117;
             border: 1px solid var(--panel-border);
             border-radius: 8px;
             color: #fff;
-            font-size: 0.92rem;
+            font-size: 0.9rem;
             outline: none;
             transition: border-color 0.2s, box-shadow 0.2s;
         }
 
-        input[type="text"]:focus, input[type="password"]:focus {
+        input[type="text"]:focus, input[type="password"]:focus, select:focus {
             border-color: var(--accent-color);
             box-shadow: 0 0 8px var(--accent-glow);
         }
@@ -233,6 +251,16 @@
         .btn-gold:hover {
             background: #f7e878;
             box-shadow: 0 4px 12px rgba(241, 224, 90, 0.3);
+        }
+
+        .btn-success {
+            background: var(--success-color);
+            color: #fff;
+        }
+
+        .btn-success:hover {
+            background: #2ea043;
+            box-shadow: 0 4px 12px rgba(63, 185, 80, 0.3);
         }
 
         /* 2. 로비 뷰 */
@@ -304,7 +332,7 @@
 
         .room-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
             gap: 14px;
             max-height: 500px;
             overflow-y: auto;
@@ -331,6 +359,9 @@
             font-weight: 600;
             font-size: 0.95rem;
             color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
         .room-meta {
@@ -339,6 +370,17 @@
             display: flex;
             justify-content: space-between;
             margin-top: 4px;
+        }
+
+        .room-rule-tag {
+            font-size: 0.72rem;
+            padding: 2px 6px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 4px;
+            color: var(--text-color);
+            border: 1px solid var(--panel-border);
+            margin-right: 4px;
+            display: inline-block;
         }
 
         .room-actions {
@@ -393,7 +435,7 @@
         }
 
         .side-panel {
-            width: 340px;
+            width: 360px;
             max-width: 100%;
             display: flex;
             flex-direction: column;
@@ -451,6 +493,28 @@
         .player-name {
             font-weight: 700;
             color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .ready-badge {
+            font-size: 0.72rem;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        .ready-badge.ready {
+            background: rgba(63, 185, 80, 0.2);
+            color: var(--success-color);
+            border: 1px solid var(--success-color);
+        }
+
+        .ready-badge.waiting {
+            background: rgba(139, 148, 158, 0.2);
+            color: var(--text-muted);
+            border: 1px solid var(--panel-border);
         }
 
         .timer-badge {
@@ -506,6 +570,27 @@
             line-height: 1.4;
         }
 
+        .augments-badges-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 6px;
+        }
+
+        .augment-badge-item {
+            font-size: 0.72rem;
+            padding: 2px 7px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+
+        .augment-badge-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+        }
+
         .inventory-box {
             display: flex;
             gap: 8px;
@@ -544,13 +629,13 @@
         .log-box {
             background: #0d1117;
             border: 1px solid var(--panel-border);
-            height: 150px;
+            height: 120px;
             overflow-y: auto;
             padding: 10px;
-            font-size: 0.82rem;
+            font-size: 0.8rem;
             border-radius: 8px;
             color: #a3be8c;
-            line-height: 1.5;
+            line-height: 1.4;
             text-align: left;
             font-family: monospace;
         }
@@ -558,6 +643,58 @@
         .log-item {
             margin-bottom: 4px;
             word-break: break-word;
+        }
+
+        .chat-box-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .chat-messages-log {
+            background: #0d1117;
+            border: 1px solid var(--panel-border);
+            height: 110px;
+            overflow-y: auto;
+            padding: 8px 10px;
+            font-size: 0.8rem;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .chat-msg-line {
+            word-break: break-word;
+            line-height: 1.3;
+        }
+
+        .chat-role-badge {
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 1px 5px;
+            border-radius: 3px;
+            margin-right: 4px;
+        }
+
+        .chat-role-black { background: #30363d; color: #fff; border: 1px solid #555; }
+        .chat-role-white { background: rgba(216, 166, 87, 0.2); color: var(--accent-color); border: 1px solid var(--accent-color); }
+        .chat-role-spectator { background: rgba(139, 148, 158, 0.2); color: var(--text-muted); border: 1px solid var(--panel-border); }
+
+        .chat-input-row {
+            display: flex;
+            gap: 6px;
+        }
+
+        .chat-input-row input {
+            flex: 1;
+            padding: 8px 10px;
+            font-size: 0.82rem;
+        }
+
+        .chat-input-row .btn {
+            padding: 8px 12px;
+            font-size: 0.82rem;
         }
 
         .game-controls {
@@ -610,8 +747,8 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(4px);
+            background: rgba(0, 0, 0, 0.82);
+            backdrop-filter: blur(5px);
             justify-content: center;
             align-items: center;
             z-index: 100;
@@ -627,7 +764,7 @@
             border-radius: 14px;
             border: 1px solid var(--accent-color);
             width: 90%;
-            max-width: 600px;
+            max-width: 540px;
             text-align: center;
             box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
         }
@@ -675,6 +812,80 @@
             font-size: 0.82rem;
             color: var(--text-muted);
             line-height: 1.3;
+        }
+
+        .form-row {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            text-align: left;
+            margin-top: 12px;
+        }
+
+        .form-row label {
+            font-size: 0.84rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        /* ⚔️ VS 대결 스타트 오버레이 모달 스타일 */
+        .vs-card-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 24px 0;
+            gap: 16px;
+        }
+
+        .vs-player-card {
+            flex: 1;
+            background: #21262d;
+            border: 2px solid var(--panel-border);
+            border-radius: 12px;
+            padding: 20px 14px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        }
+
+        .vs-player-card.black-side { border-color: #fff; }
+        .vs-player-card.white-side { border-color: var(--accent-color); }
+
+        .vs-stone-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.4rem;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+
+        .vs-stone-avatar.black { background: #111; color: #fff; border: 2px solid #555; }
+        .vs-stone-avatar.white { background: #fff; color: #111; border: 2px solid var(--accent-color); }
+
+        .vs-badge {
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: var(--accent-color);
+            text-shadow: 0 0 16px var(--accent-glow);
+            animation: vs-pulse 1s infinite alternate;
+        }
+
+        @keyframes vs-pulse {
+            0% { transform: scale(1); text-shadow: 0 0 10px var(--accent-glow); }
+            100% { transform: scale(1.15); text-shadow: 0 0 25px var(--accent-color); }
+        }
+
+        .vs-countdown-circle {
+            font-size: 2.8rem;
+            font-weight: 900;
+            color: var(--gold-color);
+            margin-top: 10px;
         }
     </style>
 </head>
@@ -768,6 +979,11 @@
                         <div style="margin-bottom: 4px; font-weight: 700; font-size: 1.1rem; color: var(--accent-color);" id="room-title-display">
                             대국실
                         </div>
+                        <div style="display: flex; gap: 8px; margin-bottom: 6px; font-size: 0.8rem;">
+                            <span class="room-rule-tag" id="room-set-badge">단판 승부</span>
+                            <span class="room-rule-tag" id="room-time-badge">5분 / 30초</span>
+                            <span class="room-rule-tag" id="room-score-badge">매치 스코어 0:0</span>
+                        </div>
                         <div style="font-size: 0.88rem; margin-bottom: 2px;">
                             내 역할: <span id="my-role-display" style="font-weight: bold; color:#fff;">-</span>
                         </div>
@@ -781,23 +997,45 @@
                         <div class="player-info-box" id="players-status">
                             <div class="player-row black-row">
                                 <div class="player-header-line">
-                                    <span class="player-name" id="black-name-display">흑: 대기 중</span>
+                                    <span class="player-name">
+                                        <span id="black-name-display">흑: 대기 중</span>
+                                        <span class="ready-badge waiting" id="black-ready-badge">⚪ 대기</span>
+                                    </span>
                                     <span class="timer-badge" id="black-timer">⏱️ 05:00</span>
                                 </div>
                                 <div class="xp-bar-container"><div class="xp-bar-fill" id="black-xp-fill" style="width: 0%;"></div></div>
                                 <div class="player-detail" id="black-stats-detail">XP: 0/25 | 골드: 50 💰 | 사석: 0개</div>
                                 <div class="inventory-box" id="black-inventory"></div>
                                 <div class="player-detail" style="margin-top: 4px;" id="black-augments-detail">증강 소지: 0개 / 6개</div>
+                                <div class="augments-badges-list" id="black-augments-badges"></div>
                             </div>
                             <div class="player-row white-row">
                                 <div class="player-header-line">
-                                    <span class="player-name" id="white-name-display">백: 대기 중</span>
+                                    <span class="player-name">
+                                        <span id="white-name-display">백: 대기 중</span>
+                                        <span class="ready-badge waiting" id="white-ready-badge">⚪ 대기</span>
+                                    </span>
                                     <span class="timer-badge" id="white-timer">⏱️ 05:00</span>
                                 </div>
                                 <div class="xp-bar-container"><div class="xp-bar-fill" id="white-xp-fill" style="width: 0%;"></div></div>
                                 <div class="player-detail" id="white-stats-detail">XP: 0/25 | 골드: 50 💰 | 사석: 0개</div>
                                 <div class="inventory-box" id="white-inventory"></div>
                                 <div class="player-detail" style="margin-top: 4px;" id="white-augments-detail">증강 소지: 0개 / 6개</div>
+                                <div class="augments-badges-list" id="white-augments-badges"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 💬 인게임 실시간 채팅 -->
+                    <div class="status-card">
+                        <h4>실시간 채팅</h4>
+                        <div class="chat-box-container">
+                            <div class="chat-messages-log" id="chat-messages-log">
+                                <div style="color: var(--text-muted); font-size: 0.75rem; text-align: center; margin-top: 20px;">대국실 채팅에 참여하세요.</div>
+                            </div>
+                            <div class="chat-input-row">
+                                <input type="text" id="chat-input" placeholder="메시지 입력..." maxlength="100">
+                                <button class="btn" id="send-chat-btn">전송</button>
                             </div>
                         </div>
                     </div>
@@ -807,9 +1045,9 @@
                         <div class="log-box" id="log-box">대국실에 입장했습니다.</div>
                     </div>
 
-                    <div class="game-controls">
-                        <button class="btn btn-warning" id="pass-btn">패스</button>
-                        <button class="btn btn-danger" id="resign-btn">기권</button>
+                    <div class="game-controls" id="game-controls-container">
+                        <button class="btn btn-success" id="ready-toggle-btn">대국 준비 (Ready)</button>
+                        <button class="btn btn-secondary" id="switch-role-btn">관전자로 전환</button>
                     </div>
 
                     <button class="btn btn-secondary" id="leave-room-btn">로비로 나가기</button>
@@ -817,6 +1055,36 @@
             </div>
         </section>
 
+    </div>
+
+    <!-- ⚔️ VS 매치 대결 오버레이 모달 (점수 기반 돌 할당 & 무작위 롤 연출) -->
+    <div class="modal" id="vs-match-modal">
+        <div class="modal-content" style="max-width: 600px; padding: 32px 24px;">
+            <h3 style="font-size: 1.5rem; letter-spacing: 1px;">⚔️ MATCH START!</h3>
+            <p id="vs-reason-text" style="font-size: 0.88rem; color: var(--gold-color); margin-top: 4px;">점수가 높은 플레이어가 백돌(덤 6.5)로 자동 배치됩니다.</p>
+            
+            <div class="vs-card-container">
+                <div class="vs-player-card black-side">
+                    <div class="vs-stone-avatar black">⬛</div>
+                    <div style="font-weight: 700; font-size: 1.1rem; color: #fff;" id="vs-black-nickname">흑돌선수</div>
+                    <div style="font-size: 0.8rem; color: var(--accent-color);" id="vs-black-rating">1000점</div>
+                </div>
+
+                <div class="vs-badge">VS</div>
+
+                <div class="vs-player-card white-side">
+                    <div class="vs-stone-avatar white">⬜</div>
+                    <div style="font-weight: 700; font-size: 1.1rem; color: #fff;" id="vs-white-nickname">백돌선수</div>
+                    <div style="font-size: 0.8rem; color: var(--accent-color);" id="vs-white-rating">1000점</div>
+                </div>
+            </div>
+
+            <div id="vs-random-roll-msg" style="display: none; font-size: 0.95rem; color: var(--gold-color); font-weight: bold; margin-bottom: 8px;">
+                🎲 동점! 돌 가리기 무작위 추첨 진행 중...
+            </div>
+
+            <div class="vs-countdown-circle" id="vs-countdown-num">3</div>
+        </div>
     </div>
 
     <!-- 🌟 통합 커스텀 알림 팝업 모달 -->
@@ -840,15 +1108,74 @@
         </div>
     </div>
 
-    <!-- 방 만들기 모달 -->
+    <!-- 🔒 비공개 방 비밀번호 입력 모달 -->
+    <div class="modal" id="password-input-modal">
+        <div class="modal-content" style="max-width: 420px;">
+            <h3>🔒 비공개 방 입장</h3>
+            <p style="font-size: 0.86rem; color: var(--text-muted); margin-top: 4px;">이 방은 비밀번호가 설정되어 있습니다.</p>
+            <div class="form-row" style="margin-top: 16px;">
+                <input type="password" id="join-room-password" placeholder="비밀번호 입력" maxlength="20">
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 18px;">
+                <button class="btn btn-secondary" style="flex: 1;" id="close-password-modal-btn">취소</button>
+                <button class="btn" style="flex: 1;" id="submit-password-btn">입장하기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ⚙️ 방 만들기 맞춤 규격 설정 모달 -->
     <div class="modal" id="create-room-modal">
         <div class="modal-content">
-            <h3>새 대국 방 만들기</h3>
-            <div class="input-group" style="margin-top: 18px;">
-                <input type="text" id="room-title-input" placeholder="방 제목 입력" maxlength="20">
+            <h3>새 맞춤 대국 방 만들기</h3>
+            <div style="display: flex; flex-direction: column; gap: 14px; margin-top: 16px;">
+                <div class="form-row">
+                    <label>방 제목</label>
+                    <input type="text" id="room-title-input" placeholder="방 제목 입력" maxlength="20">
+                </div>
+
+                <div class="form-row">
+                    <label>비공개 방 설정</label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="checkbox" id="room-private-check" style="width: 18px; height: 18px; cursor: pointer;">
+                        <span style="font-size: 0.86rem; color: #fff;">비밀번호 설정하기</span>
+                    </div>
+                    <input type="password" id="room-password-input" placeholder="4자리 비밀번호" maxlength="10" style="display: none; margin-top: 6px;">
+                </div>
+
                 <div style="display: flex; gap: 10px;">
+                    <div class="form-row" style="flex: 1;">
+                        <label>기본 제한 시간</label>
+                        <select id="room-main-time-select">
+                            <option value="300" selected>5분</option>
+                            <option value="600">10분</option>
+                            <option value="1800">30분</option>
+                            <option value="3600">60분</option>
+                        </select>
+                    </div>
+
+                    <div class="form-row" style="flex: 1;">
+                        <label>초읽기 제한 시간</label>
+                        <select id="room-byoyomi-select">
+                            <option value="10">10초</option>
+                            <option value="20">20초</option>
+                            <option value="30" selected>30초</option>
+                            <option value="60">60초</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <label>대국 세트 (매치 모드)</label>
+                    <select id="room-match-set-select">
+                        <option value="1" selected>단판 승부 (1판)</option>
+                        <option value="3">3판 2선승제 (BO3)</option>
+                        <option value="5">5판 3선승제 (BO5)</option>
+                    </select>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
                     <button class="btn btn-secondary" style="flex: 1;" id="close-create-modal-btn">취소</button>
-                    <button class="btn" style="flex: 1;" id="create-room-confirm-btn">생성하기</button>
+                    <button class="btn" style="flex: 1;" id="create-room-confirm-btn">방 생성</button>
                 </div>
             </div>
         </div>
@@ -886,8 +1213,8 @@
     <div class="modal" id="game-over-modal">
         <div class="modal-content">
             <h3 id="game-over-title">대국 종료</h3>
-            <p id="game-over-msg" style="font-size: 1rem; color: #fff; margin: 16px 0;"></p>
-            <button class="btn" id="game-over-close-btn" style="width: 100%;">확인</button>
+            <div id="game-over-msg" style="font-size: 0.95rem; color: #fff; margin: 16px 0; line-height: 1.5; white-space: pre-line;"></div>
+            <button class="btn" id="game-over-close-btn" style="width: 100%;">확인 (대기실로 복귀)</button>
         </div>
     </div>
 
@@ -896,8 +1223,8 @@
         const socket = io();
 
         let confirmCountdownInterval = null;
+        let vsCountdownInterval = null;
 
-        // 🌟 커스텀 통합 알림 모달 헬퍼 함수
         function showCustomAlert(msg, title = '알림') {
             const modal = document.getElementById('custom-alert-modal');
             document.getElementById('custom-alert-title').innerText = title;
@@ -912,7 +1239,6 @@
             });
         }
 
-        // 🌟 대국 중 퇴장 5초 카운트다운 전용 모달
         function showLeaveConfirmModal(onConfirm) {
             const modal = document.getElementById('custom-confirm-modal');
             const cancelBtn = document.getElementById('custom-confirm-cancel-btn');
@@ -959,7 +1285,6 @@
             };
         }
 
-        // 🌟 일반 확인 Confirm 모달
         function showGeneralConfirm(title, msg, actionText, onConfirm) {
             const modal = document.getElementById('custom-confirm-modal');
             const cancelBtn = document.getElementById('custom-confirm-cancel-btn');
@@ -1006,6 +1331,7 @@
         let isAdminUser = false;
         let myRole = null;
         let currentRoomState = null;
+        let augmentsPoolMap = {};
         let boardState = Array.from(Array(19), () => Array(19).fill(null));
         let shields = {};
         let locks = {};
@@ -1015,6 +1341,7 @@
         let shopItems = [];
         let activeItemTargetMode = null;
         let swapFirstStone = null;
+        let targetJoinRoomId = null;
 
         const LEVEL_REQ = [25, 50, 85, 130, 190];
 
@@ -1066,7 +1393,6 @@
             });
         };
 
-        // 🌟 로그인 처리 (세션 저장 및 중복 로그인 방지 확인)
         function performLogin(username, password, forceLogin = false) {
             socket.emit('login_account', { username, password, forceLogin }, (res) => {
                 if (res.success) {
@@ -1074,7 +1400,6 @@
                     isAdminUser = res.isAdmin;
                     if (res.shopItems) shopItems = res.shopItems;
 
-                    // localStorage에 세션 저장 (새로고침 로그인 유지)
                     localStorage.setItem('baduk_user_session', JSON.stringify({ username, password }));
 
                     updateHeaderProfile(currentUser, isAdminUser);
@@ -1093,7 +1418,6 @@
                         renderLobby(res.lobbyData);
                     }
                 } else if (res.isAlreadyLoggedIn) {
-                    // 🌟 중복 로그인 감지 시 원격 로그아웃 확인 모달 팝업
                     showGeneralConfirm(
                         '🔑 중복 로그인 감지',
                         res.message || '이미 다른 브라우저/기기에서 로그인되어 있습니다. 기존 접속을 종료하고 여기에서 새로 로그인하시겠습니까?',
@@ -1113,7 +1437,6 @@
             performLogin(username, password, false);
         };
 
-        // 🌟 새로고침 시 자동 세션 로그인 체크
         function checkAutoLogin() {
             const savedSession = localStorage.getItem('baduk_user_session');
             if (savedSession) {
@@ -1128,7 +1451,6 @@
             }
         }
 
-        // 🌟 로그아웃 처리
         document.getElementById('logout-btn').onclick = () => {
             showGeneralConfirm('로그아웃 확인', '정말 로그아웃 하시겠습니까?', '로그아웃', () => {
                 localStorage.removeItem('baduk_user_session');
@@ -1143,7 +1465,6 @@
             });
         };
 
-        // 🌟 다른 기기/창에서 새로 로그인 시 원격 로그아웃 처리
         socket.on('forced_logout', (data) => {
             localStorage.removeItem('baduk_user_session');
             currentUser = null;
@@ -1155,7 +1476,6 @@
             showCustomAlert(data.message || '다른 창에서 새롭게 로그인되어 현재 접속이 종료되었습니다.', '🔒 원격 로그아웃');
         });
 
-        // 소켓 재연결 시 세션 체크 실행
         socket.on('connect', () => {
             if (!currentUser) {
                 checkAutoLogin();
@@ -1166,7 +1486,7 @@
             if (!user) return;
             const badge = document.getElementById('user-profile-badge');
             const adminTag = isAdmin ? '<span style="color: var(--gold-color); font-weight: bold;"> [어드민]</span>' : '';
-            badge.innerHTML = `<strong>${user.nickname}</strong>${adminTag} [${user.rating}점 | ${user.wins}승 ${user.losses}패]`;
+            badge.innerHTML = `<strong>${user.nickname}</strong>${adminTag} [${user.rating || 1000}점 | ${user.wins || 0}승 ${user.losses || 0}패]`;
         }
 
         socket.on('admin_metrics_update', (metrics) => {
@@ -1186,21 +1506,33 @@
             document.getElementById('admin-uptime').innerText = `${min}분 ${sec}초`;
         }
 
-        // --- 2. 로비 및 방 이벤트 ---
+        // --- 2. 로비 및 맞춤 방 생성 이벤트 ---
         const createRoomModal = document.getElementById('create-room-modal');
         const openCreateModalBtn = document.getElementById('open-create-modal-btn');
         const closeCreateModalBtn = document.getElementById('close-create-modal-btn');
         const createRoomConfirmBtn = document.getElementById('create-room-confirm-btn');
-        const roomTitleInput = document.getElementById('room-title-input');
+        const roomPrivateCheck = document.getElementById('room-private-check');
+        const roomPasswordInput = document.getElementById('room-password-input');
+
+        roomPrivateCheck.onchange = () => {
+            roomPasswordInput.style.display = roomPrivateCheck.checked ? 'block' : 'none';
+        };
 
         openCreateModalBtn.onclick = () => { createRoomModal.classList.add('active'); };
         closeCreateModalBtn.onclick = () => { createRoomModal.classList.remove('active'); };
 
         createRoomConfirmBtn.onclick = () => {
-            const title = roomTitleInput.value.trim();
-            socket.emit('create_room', { title }, (res) => {
+            const title = document.getElementById('room-title-input').value.trim();
+            const isPrivate = roomPrivateCheck.checked;
+            const password = roomPasswordInput.value.trim();
+            const mainTimeSec = document.getElementById('room-main-time-select').value;
+            const byoYomiSec = document.getElementById('room-byoyomi-select').value;
+            const matchSetGoal = document.getElementById('room-match-set-select').value;
+
+            if (isPrivate && !password) return showCustomAlert('비공개 방의 비밀번호를 입력해 주세요.');
+
+            socket.emit('create_room', { title, isPrivate, password, mainTimeSec, byoYomiSec, matchSetGoal }, (res) => {
                 createRoomModal.classList.remove('active');
-                roomTitleInput.value = '';
                 if (res.success) {
                     myRole = res.role;
                     enterGameRoom(res.roomState);
@@ -1225,45 +1557,89 @@
                     <span class="user-stats-pill">${u.rating}점 (${u.wins}승 ${u.losses}패)</span>
                 `;
                 usersUl.appendChild(li);
+
+                // 현재 로그인 유저 정보 갱신
+                if (currentUser && u.nickname === currentUser.nickname) {
+                    currentUser.rating = u.rating;
+                    currentUser.wins = u.wins;
+                    currentUser.losses = u.losses;
+                    updateHeaderProfile(currentUser, isAdminUser);
+                }
             });
 
             const roomGrid = document.getElementById('room-list');
             roomGrid.innerHTML = '';
             if (data.rooms.length === 0) {
-                roomGrid.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding: 40px; color: var(--text-muted);">생성된 대국 방이 없습니다. 첫 번째 방을 만들어 보세요.</div>';
+                roomGrid.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding: 40px; color: var(--text-muted);">생성된 대국 방이 없습니다. 첫 번째 맞춤 방을 만들어 보세요.</div>';
                 return;
             }
 
             data.rooms.forEach(r => {
                 const card = document.createElement('div');
                 card.className = 'room-card';
+
+                const lockIcon = r.isPrivate ? '🔒 ' : '';
+                const setGoalText = r.matchSetGoal === 1 ? '단판' : r.matchSetGoal === 3 ? '3판2선' : '5판3선';
+                const mainMin = Math.floor(r.mainTimeConfig / 60);
+
                 card.innerHTML = `
                     <div>
-                        <div class="room-title">${r.title}</div>
+                        <div class="room-title">
+                            <span>${lockIcon}${r.title}</span>
+                        </div>
+                        <div style="margin-top: 6px;">
+                            <span class="room-rule-tag">${setGoalText}</span>
+                            <span class="room-rule-tag">${mainMin}분 / ${r.byoYomiConfig}초</span>
+                        </div>
                         <div class="room-meta">
                             <span>방장: ${r.hostNickname}</span>
                             <span>선수 ${r.playerCount}/2 (관전 ${r.spectatorCount})</span>
                         </div>
                     </div>
                     <div class="room-actions">
-                        ${r.playerCount < 2 ? `<button class="btn" onclick="joinRoom('${r.id}')">대국 참가</button>` : ''}
-                        <button class="btn btn-secondary" onclick="joinRoom('${r.id}')">관전하기</button>
+                        ${r.playerCount < 2 ? `<button class="btn" onclick="requestJoinRoom('${r.id}', ${r.isPrivate})">대국 참가</button>` : ''}
+                        <button class="btn btn-secondary" onclick="requestJoinRoom('${r.id}', ${r.isPrivate})">관전하기</button>
                     </div>
                 `;
                 roomGrid.appendChild(card);
             });
         }
 
-        window.joinRoom = function (roomId) {
-            socket.emit('join_room', { roomId }, (res) => {
+        const passwordModal = document.getElementById('password-input-modal');
+        const submitPasswordBtn = document.getElementById('submit-password-btn');
+        const closePasswordModalBtn = document.getElementById('close-password-modal-btn');
+
+        closePasswordModalBtn.onclick = () => { passwordModal.classList.remove('active'); };
+
+        window.requestJoinRoom = function(roomId, isPrivate) {
+            if (isPrivate) {
+                targetJoinRoomId = roomId;
+                document.getElementById('join-room-password').value = '';
+                passwordModal.classList.add('active');
+            } else {
+                executeJoinRoom(roomId, '');
+            }
+        };
+
+        submitPasswordBtn.onclick = () => {
+            const password = document.getElementById('join-room-password').value.trim();
+            if (!password) return showCustomAlert('비밀번호를 입력해 주세요.');
+            passwordModal.classList.remove('active');
+            executeJoinRoom(targetJoinRoomId, password);
+        };
+
+        function executeJoinRoom(roomId, password) {
+            socket.emit('join_room', { roomId, password }, (res) => {
                 if (res.success) {
                     myRole = res.role;
                     enterGameRoom(res.roomState);
+                } else if (res.isPasswordRequired) {
+                    showCustomAlert(res.message);
                 } else {
                     showCustomAlert(res.message || '방 입장에 실패했습니다.');
                 }
             });
-        };
+        }
 
         // --- 3. 상점 및 아이템 이벤트 ---
         const shopModal = document.getElementById('shop-modal');
@@ -1296,10 +1672,10 @@
             });
         }
 
-        // --- 4. 게임 룸 및 컨트롤 ---
+        // --- 4. 게임 룸 및 VS 대결 연출 ---
         const leaveRoomBtn = document.getElementById('leave-room-btn');
-        const passBtn = document.getElementById('pass-btn');
-        const resignBtn = document.getElementById('resign-btn');
+        const readyToggleBtn = document.getElementById('ready-toggle-btn');
+        const switchRoleBtn = document.getElementById('switch-role-btn');
 
         leaveRoomBtn.onclick = () => {
             const isPlayerInGame = (myRole === 'black' || myRole === 'white') && 
@@ -1319,19 +1695,107 @@
             }
         };
 
-        passBtn.onclick = () => {
-            if (myRole !== turn || myRole === 'spectator') return showCustomAlert('현재 본인 차례가 아닙니다.');
-            showGeneralConfirm('턴 패스 확인', '턴을 패스하시겠습니까? (양측 연속 패스 시 계가로 대국 종료)', '패스하기', () => {
-                socket.emit('pass_turn');
+        readyToggleBtn.onclick = () => {
+            socket.emit('toggle_ready', (res) => {
+                if (!res.success) {
+                    showCustomAlert(res.message);
+                }
             });
         };
 
-        resignBtn.onclick = () => {
-            if (myRole === 'spectator') return showCustomAlert('관전자는 기권할 수 없습니다.');
-            showGeneralConfirm('대국 기권 확인', '정말로 기권하시겠습니까? 상대방의 불계승으로 대국이 종료됩니다.', '기권하기', () => {
-                socket.emit('resign');
+        switchRoleBtn.onclick = () => {
+            let targetRole = 'spectator';
+            if (myRole === 'spectator') {
+                if (!currentRoomState.players.black) targetRole = 'black';
+                else if (!currentRoomState.players.white) targetRole = 'white';
+                else return showCustomAlert('흑/백 자리가 모두 가득 찼습니다.');
+            } else {
+                targetRole = 'spectator';
+            }
+
+            socket.emit('switch_role', { targetRole }, (res) => {
+                if (res.success) {
+                    myRole = res.newRole;
+                } else {
+                    showCustomAlert(res.message);
+                }
             });
         };
+
+        // ⚔️ VS 대결 카드 오버레이 연출 (점수 높은 유저 백돌 배치 & 동점 주사위 롤)
+        socket.on('match_vs_start', (vsData) => {
+            const modal = document.getElementById('vs-match-modal');
+            const reasonText = document.getElementById('vs-reason-text');
+            const rollMsg = document.getElementById('vs-random-roll-msg');
+            const countdownEl = document.getElementById('vs-countdown-num');
+
+            document.getElementById('vs-black-nickname').innerText = vsData.blackPlayer.nickname;
+            document.getElementById('vs-black-rating').innerText = `${vsData.blackPlayer.rating}점`;
+
+            document.getElementById('vs-white-nickname').innerText = vsData.whitePlayer.nickname;
+            document.getElementById('vs-white-rating').innerText = `${vsData.whitePlayer.rating}점`;
+
+            if (vsData.isRandomRoll) {
+                reasonText.innerText = '양 플레이어의 점수가 같아 돌 가리기 무작위 추첨으로 흑/백을 결정합니다!';
+                rollMsg.style.display = 'block';
+            } else {
+                reasonText.innerText = '점수가 높은 플레이어가 백돌(덤 6.5)로 자동 배치되었습니다.';
+                rollMsg.style.display = 'none';
+            }
+
+            if (currentUser) {
+                if (vsData.blackPlayer.nickname === currentUser.nickname) myRole = 'black';
+                else if (vsData.whitePlayer.nickname === currentUser.nickname) myRole = 'white';
+                else myRole = 'spectator';
+                document.getElementById('my-role-display').innerText = myRole === 'black' ? '흑' : myRole === 'white' ? '백' : '관전자';
+            }
+
+            modal.classList.add('active');
+
+            let countdown = 3;
+            countdownEl.innerText = countdown;
+
+            if (vsCountdownInterval) clearInterval(vsCountdownInterval);
+
+            vsCountdownInterval = setInterval(() => {
+                countdown -= 1;
+                if (countdown <= 0) {
+                    clearInterval(vsCountdownInterval);
+                    modal.classList.remove('active');
+                } else {
+                    countdownEl.innerText = countdown;
+                }
+            }, 1000);
+        });
+
+        // 💬 실시간 채팅 이벤트
+        const chatInput = document.getElementById('chat-input');
+        const sendChatBtn = document.getElementById('send-chat-btn');
+
+        function sendChatMessage() {
+            const text = chatInput.value.trim();
+            if (!text) return;
+            socket.emit('send_room_chat', { text });
+            chatInput.value = '';
+        }
+
+        sendChatBtn.onclick = sendChatMessage;
+        chatInput.onkeydown = (e) => {
+            if (e.key === 'Enter') sendChatMessage();
+        };
+
+        socket.on('room_chat_message', (msgObj) => {
+            const logBox = document.getElementById('chat-messages-log');
+            const line = document.createElement('div');
+            line.className = 'chat-msg-line';
+
+            const roleClass = msgObj.role === 'black' ? 'chat-role-black' : msgObj.role === 'white' ? 'chat-role-white' : 'chat-role-spectator';
+            const roleText = msgObj.role === 'black' ? '흑' : msgObj.role === 'white' ? '백' : '관전자';
+
+            line.innerHTML = `<span class="chat-role-badge ${roleClass}">${roleText}</span><strong>${msgObj.senderNickname}</strong>: ${msgObj.text}`;
+            logBox.appendChild(line);
+            logBox.scrollTop = logBox.scrollHeight;
+        });
 
         function enterGameRoom(roomState) {
             currentRoomState = roomState;
@@ -1341,6 +1805,10 @@
             turn = roomState.currentTurn;
             lastMove = null;
             activeItemTargetMode = null;
+
+            if (roomState.augmentsPool) {
+                roomState.augmentsPool.forEach(a => { augmentsPoolMap[a.id] = a; });
+            }
 
             document.getElementById('room-title-display').innerText = roomState.title;
             const roleText = myRole === 'black' ? '흑' : myRole === 'white' ? '백' : '관전자';
@@ -1400,6 +1868,15 @@
             `;
             cardEl.onclick = onClick;
             return cardEl;
+        }
+
+        function showAugmentDetailTooltip(augId) {
+            const aug = augmentsPoolMap[augId];
+            if (!aug) return;
+            const rarityKor = aug.rarity === 'common' ? '일반' : aug.rarity === 'rare' ? '희귀' : aug.rarity === 'epic' ? '영웅' : '전설';
+            const catKor = aug.category === 'growth' ? '성장/유틸' : aug.category === 'attack' ? '공격' : '수비';
+            
+            showCustomAlert(`[${rarityKor} | ${catKor}]\n\n${aug.desc}`, `📜 증강 능력: ${aug.name}`);
         }
 
         socket.on('initial_augment_options', (data) => {
@@ -1470,9 +1947,28 @@
             const blackPlayer = roomState.players.black;
             const whitePlayer = roomState.players.white;
 
+            const setGoalText = roomState.matchSetGoal === 1 ? '단판 승부' : roomState.matchSetGoal === 3 ? '3판 2선승제' : '5판 3선승제';
+            document.getElementById('room-set-badge').innerText = setGoalText;
+            document.getElementById('room-time-badge').innerText = `${Math.floor(roomState.mainTimeConfig/60)}분 / ${roomState.byoYomiConfig}초`;
+            document.getElementById('room-score-badge').innerText = `스코어 흑 ${roomState.matchScore.black} : 백 ${roomState.matchScore.white}`;
+
             document.getElementById('current-turn-display').innerText = roomState.currentTurn === 'black' ? '흑' : '백';
 
             document.getElementById('black-name-display').innerText = `흑: ${blackPlayer ? blackPlayer.nickname : '대기 중...'}`;
+            const blackReadyBadge = document.getElementById('black-ready-badge');
+            if (roomState.status === 'waiting') {
+                blackReadyBadge.style.display = 'inline-block';
+                if (roomState.readiness.black) {
+                    blackReadyBadge.className = 'ready-badge ready';
+                    blackReadyBadge.innerText = '🟢 준비 완료';
+                } else {
+                    blackReadyBadge.className = 'ready-badge waiting';
+                    blackReadyBadge.innerText = '⚪ 대기';
+                }
+            } else {
+                blackReadyBadge.style.display = 'none';
+            }
+
             const blackTargetXp = LEVEL_REQ[stats.black.level - 1] || 200;
             const blackXpPercent = stats.black.level >= 6 ? 100 : Math.min(100, Math.floor((stats.black.xp / blackTargetXp) * 100));
             document.getElementById('black-xp-fill').style.width = `${blackXpPercent}%`;
@@ -1480,7 +1976,34 @@
             document.getElementById('black-inventory').innerHTML = renderInventoryHtml(stats.black.items, 'black');
             document.getElementById('black-augments-detail').innerText = `증강 소지: ${stats.black.augments.length}개 / 6개`;
 
+            const blackBadgesContainer = document.getElementById('black-augments-badges');
+            blackBadgesContainer.innerHTML = '';
+            stats.black.augments.forEach(augId => {
+                const aug = augmentsPoolMap[augId];
+                if (aug) {
+                    const badge = document.createElement('span');
+                    badge.className = `augment-badge-item rarity-${aug.rarity}`;
+                    badge.innerText = aug.name;
+                    badge.onclick = () => showAugmentDetailTooltip(augId);
+                    blackBadgesContainer.appendChild(badge);
+                }
+            });
+
             document.getElementById('white-name-display').innerText = `백: ${whitePlayer ? whitePlayer.nickname : '대기 중...'}`;
+            const whiteReadyBadge = document.getElementById('white-ready-badge');
+            if (roomState.status === 'waiting') {
+                whiteReadyBadge.style.display = 'inline-block';
+                if (roomState.readiness.white) {
+                    whiteReadyBadge.className = 'ready-badge ready';
+                    whiteReadyBadge.innerText = '🟢 준비 완료';
+                } else {
+                    whiteReadyBadge.className = 'ready-badge waiting';
+                    whiteReadyBadge.innerText = '⚪ 대기';
+                }
+            } else {
+                whiteReadyBadge.style.display = 'none';
+            }
+
             const whiteTargetXp = LEVEL_REQ[stats.white.level - 1] || 200;
             const whiteXpPercent = stats.white.level >= 6 ? 100 : Math.min(100, Math.floor((stats.white.xp / whiteTargetXp) * 100));
             document.getElementById('white-xp-fill').style.width = `${whiteXpPercent}%`;
@@ -1488,9 +2011,57 @@
             document.getElementById('white-inventory').innerHTML = renderInventoryHtml(stats.white.items, 'white');
             document.getElementById('white-augments-detail').innerText = `증강 소지: ${stats.white.augments.length}개 / 6개`;
 
+            const whiteBadgesContainer = document.getElementById('white-augments-badges');
+            whiteBadgesContainer.innerHTML = '';
+            stats.white.augments.forEach(augId => {
+                const aug = augmentsPoolMap[augId];
+                if (aug) {
+                    const badge = document.createElement('span');
+                    badge.className = `augment-badge-item rarity-${aug.rarity}`;
+                    badge.innerText = aug.name;
+                    badge.onclick = () => showAugmentDetailTooltip(augId);
+                    whiteBadgesContainer.appendChild(badge);
+                }
+            });
+
             if (roomState.timeState) {
                 updateTimerBadge('black-timer', roomState.timeState.black);
                 updateTimerBadge('white-timer', roomState.timeState.white);
+            }
+
+            const controlsContainer = document.getElementById('game-controls-container');
+            if (roomState.status === 'waiting') {
+                const isReady = (myRole === 'black' && roomState.readiness.black) || (myRole === 'white' && roomState.readiness.white);
+                const readyBtnText = isReady ? '준비 해제 (Cancel)' : '대국 준비 (Ready)';
+                const readyBtnClass = isReady ? 'btn btn-warning' : 'btn btn-success';
+
+                controlsContainer.innerHTML = `
+                    ${myRole !== 'spectator' ? `<button class="${readyBtnClass}" id="ready-toggle-btn">${readyBtnText}</button>` : ''}
+                    <button class="btn btn-secondary" id="switch-role-btn">${myRole === 'spectator' ? '선수로 참가 (흑/백)' : '관전자로 전환'}</button>
+                `;
+
+                const rBtn = document.getElementById('ready-toggle-btn');
+                if (rBtn) rBtn.onclick = readyToggleBtn.onclick;
+
+                const sBtn = document.getElementById('switch-role-btn');
+                if (sBtn) sBtn.onclick = switchRoleBtn.onclick;
+            } else {
+                controlsContainer.innerHTML = `
+                    <button class="btn btn-warning" id="pass-btn">패스</button>
+                    <button class="btn btn-danger" id="resign-btn">기권</button>
+                `;
+                document.getElementById('pass-btn').onclick = () => {
+                    if (myRole !== turn || myRole === 'spectator') return showCustomAlert('현재 본인 차례가 아닙니다.');
+                    showGeneralConfirm('턴 패스 확인', '턴을 패스하시겠습니까? (양측 연속 패스 시 계가로 대국 종료)', '패스하기', () => {
+                        socket.emit('pass_turn');
+                    });
+                };
+                document.getElementById('resign-btn').onclick = () => {
+                    if (myRole === 'spectator') return showCustomAlert('관전자는 기권할 수 없습니다.');
+                    showGeneralConfirm('대국 기권 확인', '정말로 기권하시겠습니까? 상대방의 불계승으로 대국이 종료됩니다.', '기권하기', () => {
+                        socket.emit('resign');
+                    });
+                };
             }
         }
 
@@ -1734,13 +2305,18 @@
             boardState = data.boardState;
             drawBoard();
             const modal = document.getElementById('game-over-modal');
-            document.getElementById('game-over-title').innerText = '대국 종료';
+            document.getElementById('game-over-title').innerText = '대국 종료 (랭크 점수 산출 완료)';
             document.getElementById('game-over-msg').innerText = data.log || `${data.winnerNickname} (${data.winner === 'black' ? '흑' : '백'}) 승리!`;
             modal.classList.add('active');
         });
 
         document.getElementById('game-over-close-btn').onclick = () => {
             document.getElementById('game-over-modal').classList.remove('active');
+            if (currentRoomState) {
+                currentRoomState.status = 'waiting';
+                updateRoomUI(currentRoomState);
+                drawBoard();
+            }
         };
 
         socket.on('log_update', (msg) => {
